@@ -1,0 +1,272 @@
+/* 見た目（色・レイアウト・スマホ対応） */
+:root{--bg:#f6f5ef;--card:#fff;--ink:#222;--sub:#666;--line:#ddd;--main:#2f7d32;--main2:#e8f3e8;--warn:#b3261e}
+:root{--hat:#b8741a;--hat2:#fbeedb;--allc:#3d5a80;--all2:#e3eaf3}
+@media(prefers-color-scheme:dark){:root{--bg:#1b1d1a;--card:#262925;--ink:#eee;--sub:#aaa;--line:#3a3d38;--main:#6fbf73;--main2:#2c3a2d;--warn:#ff8a80;--hat:#b8741a;--hat2:#3b3022;--allc:#4a6f9c;--all2:#26313f}}
+/* モードごとに全体の色を切り替える（田んぼ=緑 / 畑=茶 / 全体=青） */
+body.hat{--main:var(--hat);--main2:var(--hat2)}
+body.all{--main:var(--allc);--main2:var(--all2)}
+#modes{flex-basis:100%;display:flex;gap:8px}
+#modes button{flex:1;max-width:220px;padding:10px 0;font-size:18px;font-weight:bold;border:2px solid #fff;border-radius:10px 10px 0 0;background:#fff3;color:#fff;cursor:pointer}
+#modes button.on{background:#fff;color:var(--main)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 "Yu Gothic UI","Hiragino Sans","Hiragino Kaku Gothic ProN","Meiryo",sans-serif;-webkit-text-size-adjust:100%}
+header{background:var(--main);color:#fff;padding:10px 16px;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+header h1{font-size:18px;margin:0;flex:1}
+header select{font-size:15px;padding:3px}
+nav{display:flex;gap:2px;flex-wrap:wrap;padding:8px 12px 0;border-bottom:1px solid var(--line)}
+nav button{border:0;background:none;padding:8px 14px;cursor:pointer;color:var(--sub);font-size:15px;border-bottom:3px solid transparent}
+nav button.on{color:var(--main);border-color:var(--main);font-weight:bold}
+main{padding:16px;max-width:1200px;margin:auto}
+.card{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:14px;margin-bottom:16px}
+h2{font-size:16px;margin:0 0 10px}
+table{border-collapse:collapse;width:100%}
+th,td{padding:6px 8px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap}
+th{background:var(--main2);font-weight:600}
+td.n,th.n{text-align:right}
+.scroll{overflow-x:auto}
+button.b{background:var(--main);color:#fff;border:0;border-radius:6px;padding:7px 14px;cursor:pointer;font-size:14px}
+button.g{background:none;color:var(--main);border:1px solid var(--main);border-radius:6px;padding:5px 10px;cursor:pointer;font-size:13px}
+button.d{color:var(--warn);border-color:var(--warn)}
+.bar{display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;align-items:center}
+.kpi{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px}
+.kpi div{background:var(--main2);border-radius:8px;padding:10px}
+.kpi small{color:var(--sub);display:block}.kpi b{font-size:20px}
+dialog{border:1px solid var(--line);border-radius:10px;background:var(--card);color:var(--ink);width:min(520px,94vw);padding:16px;overflow:hidden}
+dialog::backdrop{background:#0006}
+/* 入力画面：中身だけスクロールし、キャンセル／確定ボタンは常に下に表示する */
+dialog[open]{display:flex;flex-direction:column;max-height:92vh;max-height:92dvh}
+#frm{display:flex;flex-direction:column;min-height:0;flex:1;margin:0}
+#frm h2{flex:none}
+.fbody{flex:1;min-height:0;overflow-y:auto;padding:0 4px 8px 0}
+.fbar{flex:none;display:flex;flex-direction:row-reverse;gap:10px;border-top:1px solid var(--line);padding-top:12px;margin-top:6px}
+.fbar button{flex:1;padding:10px 14px;font-size:15px}
+/* 入力画面のカレンダー */
+.cal{border:1px solid var(--line);border-radius:8px;padding:8px;margin-top:6px;background:var(--card)}
+.cal .ch{display:flex;align-items:center;gap:6px;margin-bottom:6px}
+.cal .ch b{flex:1;text-align:center}
+.cal .cg{display:grid;grid-template-columns:repeat(7,1fr);gap:2px}
+.cal .cg span{text-align:center;font-size:12px;color:var(--sub)}
+.cal .cg button{padding:7px 0;border:1px solid transparent;border-radius:6px;background:none;color:var(--ink);cursor:pointer;font-size:14px}
+.cal .cg button:hover{background:var(--main2)}
+.cal .cg button.td{border-color:var(--main)}
+.cal .cg button.sun{color:var(--warn)}
+.cal .cg button.sat{color:#5b8fd6}
+.cal .cg button.sel{background:var(--main);color:#fff}
+label{display:block;margin:8px 0 2px;font-size:13px;color:var(--sub)}
+input,select,textarea{width:100%;padding:7px;font-size:15px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--ink)}
+input[type=checkbox]{width:auto}
+#status{flex-basis:100%;border-radius:6px;padding:6px 10px;font-size:14px;background:#fff3;}
+#status.ng{background:#b3261e;color:#fff}
+#status ul{margin:4px 0 0;padding-left:20px}
+#status .sthead{display:flex;justify-content:space-between;gap:12px;cursor:pointer;user-select:none;font-weight:bold}
+#status .sthead span:last-child{font-weight:normal;font-size:13px;white-space:nowrap;opacity:.9}
+/* 用語ヘルプ（? マーク）とふきだし */
+.q{display:inline-block;width:18px;height:18px;line-height:18px;border-radius:50%;background:var(--main);color:#fff;font-size:12px;text-align:center;cursor:pointer;margin-left:4px;font-weight:bold;vertical-align:middle;font-style:normal}
+#tip{position:fixed;margin:0;inset:auto;max-width:min(340px,92vw);background:var(--card);color:var(--ink);border:2px solid var(--main);border-radius:10px;padding:10px 12px;font-size:14px;box-shadow:0 4px 14px #0005;white-space:normal;line-height:1.6}
+#tip b{color:var(--main)}
+#tip .ex{display:block;margin-top:6px;background:var(--main2);border-radius:6px;padding:6px 8px;font-size:13px}
+/* 棒グラフ・はじめかた */
+.hb{display:inline-block;height:12px;border-radius:3px;background:var(--main);vertical-align:middle;min-width:2px}
+.hb.cost{background:#c0504d}
+.brow{display:flex;align-items:center;gap:10px;margin:6px 0}
+.brow span.l{width:90px;flex:none}
+.brow .trk{flex:1;background:var(--main2);border-radius:6px;height:22px;overflow:hidden}
+.brow .trk i{display:block;height:100%;background:var(--main);border-radius:6px}
+.brow .trk i.cost{background:#c0504d}
+.brow b{width:130px;text-align:right;flex:none}
+.steps{display:flex;gap:8px;flex-wrap:wrap}
+.step{flex:1;min-width:150px;border:2px dashed var(--line);border-radius:10px;padding:10px;text-align:center;cursor:pointer;background:var(--card);color:var(--ink)}
+.step.done{border:2px solid var(--main);background:var(--main2)}
+.step b{display:block;font-size:16px}
+.step small{color:var(--sub)}
+.gloss td{white-space:normal;vertical-align:top}
+header button:disabled{opacity:.4;cursor:default}
+#toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#222;color:#fff;padding:10px 18px;border-radius:24px;font-size:15px;z-index:50;box-shadow:0 4px 14px #0006}
+#toast[hidden]{display:none}
+.rq{color:#e53935;font-weight:bold;margin-left:3px}
+.fld[hidden]{display:none}
+.hint{color:var(--sub);font-size:13px}
+.warn{color:var(--warn)}
+
+/* ===== 画面が狭いとき（スマホ・縮めたウィンドウ）の見やすさ ===== */
+@media(max-width:720px){
+  body{font-size:16px}
+  header{padding:8px 10px;gap:8px}
+  header h1{font-size:15px;flex-basis:100%}
+  #lastBk{flex-basis:100%;font-size:12px}
+  #modes{gap:4px}
+  #modes button{max-width:none;font-size:15px;padding:9px 0;border-radius:8px 8px 0 0}
+  #status{font-size:13px}
+  /* タブは折り返さず、横にスワイプして選ぶ */
+  nav{flex-wrap:nowrap;overflow-x:auto;padding:6px 6px 0;-webkit-overflow-scrolling:touch;scrollbar-width:thin}
+  nav button{flex:none;white-space:nowrap;padding:10px 12px}
+  main{padding:10px}
+  .card{padding:10px;margin-bottom:12px}
+  .kpi{grid-template-columns:repeat(auto-fit,minmax(140px,1fr))}
+  .kpi b{font-size:18px}
+  .brow{flex-wrap:wrap;gap:4px 8px}
+  .brow span.l{width:auto}
+  .brow .trk{flex-basis:100%;order:3}
+  .brow b{width:auto;margin-left:auto}
+  .step{min-width:calc(50% - 8px)}
+  /* 押しやすい大きさにする（入力欄は16px以上でスマホの自動拡大を防ぐ） */
+  input,select,textarea{font-size:16px;padding:9px}
+  button.b,button.g{min-height:40px}
+  .bar button,.bar select{flex:none}
+  dialog{width:96vw;padding:12px}
+  dialog[open]{max-height:94vh;max-height:94dvh}
+  /* 一覧表は、1件ずつのカード表示にする（横スクロールなしで読める） */
+  .lt,.lt tbody,.lt tr,.lt td{display:block;width:100%}
+  .lt tr.hd{display:none}
+  .lt tr{border:1px solid var(--line);border-radius:8px;margin-bottom:10px;padding:6px 10px;background:var(--card)}
+  .lt td{display:flex;justify-content:space-between;gap:12px;border-bottom:1px dashed var(--line);padding:5px 0;white-space:normal;text-align:right;word-break:break-word}
+  .lt td::before{content:attr(data-label);color:var(--sub);font-size:13px;flex:none;text-align:left}
+  .lt td:empty{display:none}
+  .lt td.act{border-bottom:0;justify-content:flex-end;flex-wrap:wrap;gap:6px;padding-top:8px}
+  .lt td.act::before{content:none}
+  .lt td.hint{display:block;text-align:center}
+  .lt td.hint::before{content:none}
+}
+
+/* 区画マップ */
+.mapsvg{width:100%;min-width:720px;height:auto;display:block;background:var(--card);border:1px solid var(--line);border-radius:8px}
+.mapsvg .grid{fill:none;stroke:var(--line);stroke-width:1}
+.mapsvg .fz{cursor:pointer}
+.mapsvg.edit .fz{cursor:move;touch-action:none}
+.mapsvg .fz .bg{fill:var(--card);stroke:var(--sub);stroke-width:2;stroke-dasharray:6 4}
+.mapsvg .fz.grow .bg{fill:var(--cu,var(--card));stroke:rgba(0,0,0,.35);stroke-dasharray:none}
+.mapsvg .fz.plan .bg{fill:var(--main2);stroke:var(--c);stroke-width:3;stroke-dasharray:none}
+.mapsvg .fz text{font-size:calc(14px*var(--fs,1));fill:var(--ink);pointer-events:none}
+.mapsvg .fz text.b{font-size:calc(15px*var(--fs,1));font-weight:700}
+.mapsvg .fz.grow text{fill:var(--t,var(--ink))}
+.mapsvg .fz.grow text.bt{fill:#fff;font-size:calc(13px*var(--fs,1))}
+.mapsvg .fz.grow text.bt.b{font-size:calc(14px*var(--fs,1))}
+.mapsvg .fz.tint .bg{fill:var(--c);fill-opacity:.3;stroke:var(--c)}
+.mapsvg .dir text{font-size:15px;font-weight:700;fill:var(--sub);pointer-events:none}
+.mapsvg .dir .nl{fill:#d32f2f}
+.mapsvg .rose{fill:var(--card);stroke:var(--sub);stroke-width:1.5;fill-opacity:.85}
+.mapsvg .north{fill:#d32f2f}
+.mapsvg .south{fill:var(--sub)}
+.mapsvg .fz.sel .bg{stroke:#ffb300;stroke-width:5;stroke-dasharray:none}
+.mapsvg .hd{fill:#ffb300;stroke:#333;cursor:nwse-resize;touch-action:none}
+.maplg{display:inline-flex;align-items:center;gap:4px;margin-right:12px;font-size:13px}
+.maplg i{width:14px;height:14px;border-radius:3px;display:inline-block}
+.mapsel{margin-left:auto;display:inline-flex;gap:6px;align-items:center;flex-wrap:wrap}
+.mapsvg.edit svg[data-pid]{cursor:move;touch-action:none}
+.mapsvg .bh{fill:#fff;stroke:#333;cursor:nwse-resize;touch-action:none}
+.mapsvg .dir{pointer-events:none}
+
+/* ===== 区画マップの追加分：サブタブ・藁/マルチ・時間軸・スマホ調整・Safari対応 ===== */
+.subtab{display:inline-flex;gap:4px}
+.subtab button{border:1px solid var(--main);background:none;color:var(--main);padding:6px 12px;border-radius:16px;cursor:pointer;font-size:14px;touch-action:manipulation}
+.subtab button.on{background:var(--main);color:#fff;font-weight:bold}
+.chk{display:inline-flex;align-items:center;gap:6px;margin:0;color:var(--ink);font-size:15px;cursor:pointer}
+.chk input{width:22px;height:22px;margin:0}
+.sw{display:inline-block;width:14px;height:14px;border-radius:3px;vertical-align:middle}
+.mapsvg{aspect-ratio:1000/640;-webkit-tap-highlight-color:transparent}
+.mapsvg.edit,.mapsvg.edit text{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+.mapsvg .rim{pointer-events:none}
+.mapadj{border:1px solid var(--line);border-radius:8px;padding:10px;margin-top:10px;background:var(--main2)}
+.mapadj .adjrow{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:8px}
+.mapadj .adjrow span{font-size:13px;color:var(--sub);min-width:2em}
+.mapadj button{min-width:44px;min-height:40px;touch-action:manipulation}
+.mapadj .adjcrop{margin-top:10px;border-top:1px dashed var(--line);padding-top:8px}
+.mapadj .adjsl{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:4px 16px}
+.mapadj .sl{display:block;margin:4px 0}
+.mapadj .sl b{color:var(--ink);float:right}
+.mapadj input[type=range]{padding:0;height:34px;border:0;background:none}
+/* 履歴（時間軸） */
+.tl{display:flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:var(--card)}
+.tlnames{flex:none;width:116px;border-right:1px solid var(--line);background:var(--card)}
+.tlhead{background:var(--main2);border-bottom:1px solid var(--line)}
+.tln{display:flex;align-items:flex-start;gap:6px;padding:6px 8px;border-bottom:1px solid var(--line);font-size:14px;font-weight:600;overflow:hidden}
+.tln i{flex:none;width:12px;height:12px;border-radius:3px;margin-top:4px}
+.tln span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tlscroll{flex:1;min-width:0;-webkit-overflow-scrolling:touch}
+.tlsvg{display:block;max-width:none}
+.tlyr{fill:var(--main2)}
+.tly{font-size:13px;font-weight:700;fill:var(--ink)}
+.tlm{font-size:12px;fill:var(--sub)}
+.tlgrid{stroke:var(--line);stroke-width:1}
+.tlgrid.yr{stroke:var(--sub)}
+.tltoday{stroke:#d32f2f;stroke-width:2;pointer-events:none}
+.tltd{font-size:12px;font-weight:700;fill:#d32f2f;pointer-events:none}
+.tlb{cursor:pointer}
+.tlt{font-size:12px;font-weight:700;pointer-events:none}
+.tlk{pointer-events:none}
+.tlk circle{fill:#fff;stroke:#333;stroke-width:1.5}
+.tlk text{font-size:9px;font-weight:700;fill:#222}
+.tlkey{display:inline-block;min-width:26px;text-align:center;border:1.5px solid #333;border-radius:11px;background:#fff;color:#222;font-size:11px;padding:1px 4px}
+@media(max-width:720px){
+  .tlnames{width:88px}
+  .tln{font-size:13px;padding:6px 5px}
+  .subtab button{padding:8px 12px}
+  .chk{font-size:16px}
+  .mapadj .adjsl{grid-template-columns:1fr}
+}
+/* ===== 被覆資材・ヘッダー出し入れ・経費の検索・田畑別の集計・スマホの区画マップ ===== */
+/* 被覆資材の模様（地図の帯・履歴の棒に重ねる。凡例の見本も同じ斜線） */
+.mapsvg .cv,.mapsvg .cvb{pointer-events:none}
+.cvsw{width:22px!important;height:14px!important;border:1px solid var(--sub);background-color:#78909c}
+.cvsw.mulch{background-image:repeating-linear-gradient(45deg,rgba(26,35,126,.85) 0 4px,rgba(255,255,255,.85) 4px 5px,transparent 5px 8px)}
+.cvsw.straw{background-image:repeating-linear-gradient(-45deg,rgba(224,168,0,.9) 0 4px,rgba(255,255,255,.85) 4px 5px,transparent 5px 8px)}
+.cvsw.both{background-image:repeating-linear-gradient(45deg,rgba(26,35,126,.85) 0 4px,rgba(255,255,255,.85) 4px 5px,transparent 5px 8px),repeating-linear-gradient(-45deg,rgba(224,168,0,.9) 0 4px,rgba(255,255,255,.85) 4px 5px,transparent 5px 8px)}
+.mapsvg .dir .nlm{paint-order:stroke;stroke:var(--card);stroke-width:3px}
+/* パソコンでは、囲みの <span> がないものとして並べる（レイアウトは今までと同じ） */
+.mapdate,.maptop{display:contents}
+/* 入力画面の見出しに出す「田んぼ／畑」の札 */
+.mbadge{display:inline-block;vertical-align:middle;font-size:13px;font-weight:700;padding:2px 10px;border-radius:12px;margin-left:6px;color:#fff}
+.mbadge.rice{background:#2f7d32}
+.mbadge.hat{background:#b8741a}
+/* ヘッダーの出し入れ（場所は変えず、見た目だけ上へ動かすので、下の内容はガタつかない） */
+header{position:sticky;top:0;z-index:40;transition:transform .25s ease}
+header.hdr-hide{transform:translateY(-100%)}
+@media(prefers-reduced-motion:reduce){header{transition:none}}
+/* 経費の検索・絞り込み */
+mark{background:#ffe08a;color:#222;border-radius:2px;padding:0 1px}
+.expsearch{margin:6px 0 10px}
+.expsearch .sbox{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.expsearch .sbox input{flex:1 1 240px;min-width:0;width:auto}
+.expsearch details{margin-top:8px;border:1px solid var(--line);border-radius:8px;padding:6px 10px;background:var(--card)}
+.expsearch summary{cursor:pointer;font-weight:600;padding:4px 0;color:var(--main)}
+.expf{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:4px 12px;margin-top:6px}
+.expf .fl{margin:4px 0 0;min-width:0}
+.expf .fl input,.expf .fl select{margin-top:2px;min-width:0}
+.expcats{display:flex;flex-wrap:wrap;gap:4px 14px;align-items:center;margin-top:8px}
+.expcats .chk{font-size:14px}
+.lt td .hit{white-space:normal;font-size:12px;color:var(--sub);margin-top:2px;max-width:340px}
+/* 全体モード：田んぼと畑を並べて別々に集計 */
+.dsec{font-size:17px;margin:18px 0 8px;padding-left:8px;border-left:5px solid var(--main)}
+.dgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:start}
+.dgrid .card{margin-bottom:0;min-width:0}
+.dcol h2{font-size:17px}
+.dh{font-size:14px;margin:14px 0 4px;color:var(--sub)}
+.dcol .kpi{grid-template-columns:repeat(3,1fr)}
+@media(max-width:900px){.dgrid{grid-template-columns:1fr}}
+@media(max-width:720px){.dcol .kpi{grid-template-columns:1fr}}
+
+/* ===== スマホ幅（区画マップ）：画面に収め、ボタンを折り返してきれいに並べる ===== */
+@media(max-width:720px){
+  /* 地図は画面の幅に収める（広い地図は、地図の中だけ横にスクロール） */
+  .mapscroll{max-width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .mapsvg{min-width:0;aspect-ratio:auto}
+  /* 基準日の日付欄と「今日」ボタンは、重ならないよう横に並べる */
+  .mapdate{display:flex;flex:1 1 100%;gap:8px;align-items:flex-end;flex-wrap:nowrap;min-width:0}
+  .mapdate label{flex:1 1 auto;min-width:0}
+  .mapdate input[type=date]{width:100%;min-width:0;max-width:100%;-webkit-appearance:none;appearance:none;text-align:left;min-height:40px}
+  .mapdate button{flex:none}
+  /* 「地図の上」の選択と、区画を追加・配置を編集のボタン */
+  .maptop{display:grid;grid-template-columns:1fr 1fr;gap:8px;flex:1 1 100%;align-items:stretch}
+  .maptop label{grid-column:1/-1;display:flex;align-items:center;gap:8px;min-width:0}
+  .maptop label select{flex:1;min-width:0}
+  .maptop button{width:100%}
+  /* 畑の選択と、畑を追加・畑の情報を編集のボタン */
+  .mapsel{margin-left:0;flex:1 1 100%;display:grid;grid-template-columns:1fr 1fr;gap:8px;min-width:0}
+  .mapsel select{grid-column:1/-1;min-width:0;width:100%}
+  .mapsel button{width:100%}
+  .subtab{flex-wrap:wrap}
+  /* 経費の検索：入力欄を全幅に */
+  .expsearch .sbox input{flex-basis:100%}
+  .expf{grid-template-columns:1fr 1fr}
+  .lt td .hit{max-width:none;text-align:right}
+}

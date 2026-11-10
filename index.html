@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex">
+<title>帳簿アプリ</title>
+<link rel="icon" type="image/jpeg" sizes="192x192" href="assets/icon.jpg">
+<link rel="apple-touch-icon" href="assets/icon.jpg">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<header>
+  <h1>帳簿アプリ</h1>
+  <label style="margin:0;color:#fff">年分
+    <select id="year"></select></label>
+  <button class="g" style="color:#fff;border-color:#fff" onclick="backup()">💾 JSONで保存</button>
+  <button class="g" id="undoBtn" style="color:#fff;border-color:#fff" onclick="undo()">↩ 元に戻す</button>
+  <button class="g" id="redoBtn" style="color:#fff;border-color:#fff" onclick="redo()">↪ やり直す</button>
+  <button class="g" id="syncBtn" style="color:#fff;border-color:#fff" onclick="syncClick()">🔗 共有ファイル</button>
+  <span id="lastBk" style="font-size:13px"></span>
+  <div id="modes"></div>
+  <div id="status"></div>
+</header>
+<nav id="nav"></nav>
+<main id="view"></main>
+<footer style="text-align:center;padding:8px 16px 24px;font-size:13px"><a href="privacy.html" target="_blank" rel="noopener" style="color:var(--sub)">プライバシーポリシー</a></footer>
+<dialog id="dlg"><form method="dialog" id="frm"></form></dialog>
+<div id="tip" popover="manual"></div>
+<div id="toast" hidden></div>
+
+<!-- 読み込み順に意味があります（上のファイルの部品を、下のファイルが使います） -->
+<script src="js/state.js"></script>
+<script src="js/history.js"></script>
+<script src="js/entities.js"></script>
+<script src="js/utils.js"></script>
+<script src="js/accounts.js"></script>
+<script src="js/areas.js"></script>
+<script src="js/glossary.js"></script>
+<script src="js/list.js"></script>
+<script src="js/app.js"></script>
+<script src="js/dialog.js"></script>
+<script src="js/calendar.js"></script>
+<script src="js/edit.js"></script>
+<script src="js/depreciation.js"></script>
+<script src="js/etax.js"></script>
+<script src="js/dashboard.js"></script>
+<script src="js/map.js"></script>
+<script src="js/maptl.js"></script>
+<script src="js/expfilter.js"></script>
+<script src="js/scrollhdr.js"></script>
+<script src="js/backupchain.js"></script>
+<script src="js/backup.js"></script>
+<script src="js/crypto.js"></script>
+<script src="js/sync.js"></script>
+<script src="js/gdrive.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>

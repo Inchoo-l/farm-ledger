@@ -1,0 +1,17 @@
+{
+  // 帳簿の自動バックアップ用 Worker（静的サイト tanbo-ledger とは別のもの）
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "tanbo-backup",
+  "main": "src/index.js",
+  "compatibility_date": "2026-11-04",
+  "workers_dev": false,
+  "observability": { "enabled": true },
+  // 毎日 UTC 16:00 ＝ 日本時間 翌日 1:00。フルか増分かは、日本時間の曜日でコードが決める
+  "triggers": { "crons": ["0 16 * * *"] },
+  "vars": {
+    "DATA_FILE_NAME": "sharedFolder.json",
+    "BACKUP_FOLDER_NAME": "バックアップ",
+    "FULL_DAY": "0",
+    "NOTIFY_ON_SUCCESS": "full"
+  }
+}

@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex">
+<title>プライバシーポリシー｜帳簿アプリ</title>
+<link rel="icon" type="image/jpeg" sizes="192x192" href="assets/icon.jpg">
+<link rel="stylesheet" href="css/style.css">
+<style>
+  .pp{max-width:760px;margin:0 auto;padding:16px 16px 40px;line-height:1.8}
+  .pp h1{font-size:22px;margin:8px 0 4px}
+  .pp h2{font-size:17px;margin:28px 0 6px;padding-left:8px;border-left:5px solid var(--main)}
+  .pp p,.pp li{font-size:15px}
+  .pp ul{padding-left:20px}
+  .pp table{margin:8px 0}
+  .pp th,.pp td{white-space:normal;vertical-align:top}
+  .pp a{color:var(--main)}
+  .pp code{overflow-wrap:anywhere;word-break:break-all}
+</style>
+</head>
+<body>
+<main class="pp">
+<h1>プライバシーポリシー</h1>
+<p class="hint">帳簿アプリ（以下「本アプリ」）　制定日：2026年11月9日</p>
+
+<h2>1. 運営者・問い合わせ先</h2>
+<ul>
+  <li>運営者：帳簿アプリ運営者</li>
+  <li>問い合わせ先：<a href="https://github.com/Lmdye1/farm-ledger/issues" target="_blank" rel="noopener">GitHub の Issues（https://github.com/Lmdye1/farm-ledger/issues）</a>　※Issues は誰でも見られます。個人情報や帳簿の内容は書き込まないでください。</li>
+</ul>
+
+<h2>2. 本アプリについて</h2>
+<p>本アプリは、田んぼ・畑の経費、売上、口座、作付、減価償却、区画マップなどを記録・集計する帳簿アプリです。現在は、運営者の家族のみが利用しています。</p>
+
+<h2>3. 取得する情報</h2>
+<ul>
+  <li><b>利用者が入力したデータ</b>：経費、売上、口座、作付、圃場・区画、設定など、帳簿アプリに入力した内容です。</li>
+  <li><b>Google ドライブ連携を使う場合</b>：連携で扱うのは、本アプリが作成した共有ファイル（<code>sharedFolder.json</code>）と、自動バックアップのファイルだけです。取得する権限（OAuth スコープ）は <code>https://www.googleapis.com/auth/drive.file</code> のみです。この権限では、本アプリが作成したファイルだけが対象になり、ドライブのほかのファイルは見えません。</li>
+  <li>本アプリは、Google アカウントのメールアドレスや氏名などのプロフィール情報を取得する処理を持っていません。</li>
+  <li>Cookie の設定、アクセス解析、広告の表示は、本アプリでは行っていません。</li>
+</ul>
+
+<h2>4. 利用目的</h2>
+<ul>
+  <li>帳簿の記録・集計・表示のため。</li>
+  <li>複数の端末で同じデータを使えるよう、共有ファイルをドライブに保存・読み込みするため。</li>
+  <li>データの消失に備え、自動バックアップを保存するため。</li>
+</ul>
+<p>上記以外の目的には利用しません。</p>
+
+<h2>5. 保存・管理方法</h2>
+<table>
+  <tr><th>保存場所</th><th>内容</th></tr>
+  <tr><td>利用者のブラウザ内（localStorage）</td><td>帳簿データ本体、画面の表示設定、Google のクライアントID、共有ファイル同期時の控えなど。本アプリの運営者のサーバーには送信されません。</td></tr>
+  <tr><td>利用者のブラウザ内（IndexedDB）</td><td>共有ファイルを開き直すための手がかり（ファイルID・名前など）。</td></tr>
+  <tr><td>利用者の Google ドライブ</td><td>連携を使った場合のみ。共有ファイル <code>sharedFolder.json</code>、自動バックアップ用の「バックアップ」フォルダ内のファイル。</td></tr>
+</table>
+<ul>
+  <li>共有ファイルとバックアップは、利用者が設定したパスワードで暗号化できます（AES-256-GCM）。パスワードは保存しません。暗号化を設定している場合、ドライブ上のファイルの中身は暗号化された状態で保存されます。</li>
+  <li>Google のアクセストークンは、ブラウザのメモリ上にのみ保持し、保存しません（約1時間で失効します）。</li>
+</ul>
+
+<h2>6. Google ユーザーデータの取り扱い</h2>
+<ul>
+  <li>Google ドライブのデータは、「4. 利用目的」に記載した、共有ファイルの保存・読み込みと自動バックアップのためにのみ使います。</li>
+  <li>広告の表示には使いません。</li>
+  <li>第三者に販売・提供しません。</li>
+  <li>本アプリは運営者のサーバーにデータを集めないため、運営者が利用者のデータを閲覧する仕組みはありません。</li>
+  <li>本アプリによる Google API から受け取った情報の利用は、<a href="https://developers.google.com/terms/api-services-user-data-policy" target="_blank" rel="noopener">Google API サービスのユーザーデータに関するポリシー</a>の内容を踏まえて行います。</li>
+</ul>
+
+<h2>7. 自動バックアップ機能</h2>
+<p>運営者が別途設定する自動バックアップ（Cloudflare Workers で動作）を使う場合、次のとおりです。</p>
+<ul>
+  <li>毎日、利用者のドライブの共有ファイルを読み、同じドライブの「バックアップ」フォルダへ、フルバックアップと増分バックアップを保存します。</li>
+  <li>Google へのアクセスに必要な認証情報（リフレッシュトークンなど）と、暗号化を使う場合の暗号鍵は、Cloudflare の秘密情報として保管します。</li>
+  <li>失敗などの通知は、通知サービス <a href="https://ntfy.sh/" target="_blank" rel="noopener">ntfy</a> に送信します。通知に含めるのは、ファイル名、サイズ、成功・失敗の別、エラーメッセージです。帳簿の内容（金額や取引先など）は送信しません。</li>
+</ul>
+
+<h2>8. 第三者提供と外部サービスの利用</h2>
+<p>本アプリは、個人情報を含む利用者のデータを、法令に基づく場合を除き、第三者に提供しません。ただし、本アプリの動作のため、次の外部サービスを利用します。</p>
+<table>
+  <tr><th>サービス</th><th>利用内容</th></tr>
+  <tr><td>Google（ログイン部品、Google Drive API）</td><td>ドライブ連携を使う場合のログインと、ファイルの保存・読み込み。ログイン部品は Google から読み込まれ、Google のプライバシーポリシーに従って情報が扱われます。</td></tr>
+  <tr><td>Cloudflare（Workers）</td><td>本アプリの配信（ホスティング）と、自動バックアップの実行。配信にあたり、IPアドレスなどのアクセス情報がログに記録されることがあります。</td></tr>
+  <tr><td>ntfy</td><td>自動バックアップの通知（上記「7」の内容のみ）。</td></tr>
+</table>
+<p>上記以外の外部サービスへ、データを送信することはありません。</p>
+
+<h2>9. データの削除・連携の解除</h2>
+<ul>
+  <li><b>アプリ内での解除</b>：「全体」→「💾 バックアップ」→ 共有ファイルのカードの「接続を解除」で、ドライブとの連携を解除できます。ドライブ上のファイルは残ります。</li>
+  <li><b>Google アカウント側での解除</b>：Google アカウントの「セキュリティ」→「サードパーティのアプリとサービス」から、本アプリへのアクセス許可を削除できます。</li>
+  <li><b>ドライブ上のデータの削除</b>：利用者のドライブから、<code>sharedFolder.json</code> と「バックアップ」フォルダを削除してください（ゴミ箱に移した後、完全に削除します）。</li>
+  <li><b>ブラウザ内のデータの削除</b>：ブラウザの設定で、本アプリのサイトデータ（localStorage・IndexedDB）を削除してください。先にアプリの「JSONで保存」でバックアップを取ることをおすすめします。</li>
+  <li><b>自動バックアップの停止・削除</b>：運営者にご連絡ください。Worker と保管している秘密情報を削除します。</li>
+</ul>
+
+<h2>10. ポリシーの変更</h2>
+<p>機能の追加や法令の変更などにより、本ポリシーを変更することがあります。変更後の内容は、このページに掲載した時点から効力を生じます。</p>
+
+<p style="margin-top:28px"><a href="./">← 帳簿アプリへ戻る</a></p>
+</main>
+</body>
+</html>

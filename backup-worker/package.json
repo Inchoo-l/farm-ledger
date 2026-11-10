@@ -1,0 +1,12 @@
+{
+  "name": "tanbo-backup",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "帳簿アプリの自動バックアップ（フル＋増分）を Google ドライブへ保存する Cloudflare Worker",
+  "scripts": {
+    "test": "node --test \"test/*.test.mjs\"",
+    "dev": "wrangler dev --test-scheduled",
+    "deploy": "wrangler deploy"
+  }
+}

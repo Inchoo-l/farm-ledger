@@ -1,0 +1,8 @@
+# 手元で試すとき用の秘密情報（このファイルを .dev.vars という名前でコピーして、値を入れます。.dev.vars は他人に見せない・共有しない）
+GOOGLE_CLIENT_ID=xxxxxxxx.apps.googleusercontent.com
+GOOGLE_CLIENT_SECRET=GOCSPX-xxxxxxxx
+GOOGLE_REFRESH_TOKEN=1//xxxxxxxx
+# アプリの「自動バックアップ用の鍵を表示」で出た文字列（1行）。共有ファイルを暗号化していないなら不要
+DATA_KEY={"v":1,"salt":"...","iter":600000,"key":"..."}
+# ntfy の通知先（推測されにくい名前にする。例：tanbo-backup-ab12cd34ef）
+NTFY_TOPIC=tanbo-backup-xxxxxxxxxx
