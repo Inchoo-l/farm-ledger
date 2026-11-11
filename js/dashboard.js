@@ -22,13 +22,7 @@ function dash(){
 
   // 作付別原価
   const pl=db.plantings.filter(p=>p.year==year&&inMode(p));
-  // 田んぼ・畑の内訳（全体モードで表示）
-  const divRows=["田","畑"].map(d=>{
-    const i=db.sales.filter(s=>inYear(s.date)&&divOf(s)==d).reduce((s,r)=>s+(+r.amount||0),0);
-    const e=db.expenses.filter(x=>inYear(x.date)&&divOf(x)==d).reduce((s,r)=>s+expAmt(r),0)
-      +db.assets.filter(a=>divOf(a)==d).reduce((s,a)=>s+depreciation(a,year).biz,0);
-    return[d==="田"?"田んぼ":"畑",i,e];
-  });
+  // 田んぼ・畑ごとの内訳は、全体モードの上の「申告用の合計との照合」（dashDivSection）に出す（同じ表を2か所に出さない）
   const common=ex.filter(noPlanting).reduce((s,e)=>s+expAmt(e),0)+depTotal;
   const totalArea=pl.reduce((s,p)=>s+(+(db.fields.find(f=>f.id==p.fieldId)||{}).area||0),0);
   const prow=pl.map(p=>{
@@ -69,9 +63,7 @@ function dash(){
       <div class="brow"><span class="l">経費</span><div class="trk"><i class="cost" style="width:${exTotal/barMax*100}%"></i></div><b>${yen(exTotal)} 円</b></div>
       <p class="hint" style="margin:4px 0 0">${before>=0?"収入のほうが多いので、もうけが出ています。":"<span class='warn'>経費のほうが多く、赤字になっています。</span>"}</p>
     </div>
-    ${mode=="all"?`<div class="scroll" style="margin-top:10px"><table><tr><th></th><th class="n">収入</th><th class="n">経費</th><th class="n">差引</th></tr>
-      ${divRows.map(([n,i,e])=>`<tr><td>${n}</td><td class="n">${yen(i)}</td><td class="n">${yen(e)}</td><td class="n">${yen(i-e)}</td></tr>`).join("")}</table></div>`
-      :`<p class="hint">青色申告特別控除と農業所得は、田んぼと畑を合算する「📋 全体」タブで確認します。</p>`}
+    ${mode=="all"?"":`<p class="hint">青色申告特別控除と農業所得は、田んぼと畑を合算する「📋 全体」タブで確認します。</p>`}
     ${mode!="all"?"":`<p class="hint">控除額の設定：<select onchange="db.settings.deduction=+this.value;save();render()">
       ${[[650000,"65万円（e-Tax＋複式簿記）"],[550000,"55万円"],[100000,"10万円（簡易簿記）"],[0,"なし"]].map(([v,l])=>`<option value="${v}" ${v==ded?"selected":""}>${l}</option>`).join("")}</select>
       　<label style="display:inline;margin:0"><input type="checkbox" ${db.settings.approved?"checked":""} onchange="db.settings.approved=this.checked;save();render()" style="width:auto"> 青色申告承認申請書を提出し承認済み</label>${q("青色申告承認申請書")}${q("複式簿記")}
