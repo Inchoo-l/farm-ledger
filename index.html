@@ -12,19 +12,19 @@
 <body>
 <header>
   <h1>帳簿アプリ</h1>
-  <label style="margin:0;color:#fff">年分
+  <label class="yr">年分
     <select id="year"></select></label>
-  <button class="g" style="color:#fff;border-color:#fff" onclick="backup()">💾 JSONで保存</button>
-  <button class="g" id="undoBtn" style="color:#fff;border-color:#fff" onclick="undo()">↩ 元に戻す</button>
-  <button class="g" id="redoBtn" style="color:#fff;border-color:#fff" onclick="redo()">↪ やり直す</button>
-  <button class="g" id="syncBtn" style="color:#fff;border-color:#fff" onclick="syncClick()">🔗 共有ファイル</button>
-  <span id="lastBk" style="font-size:13px"></span>
+  <button class="g" onclick="backup()">💾 JSONで保存</button>
+  <button class="g" id="undoBtn" onclick="undo()" aria-label="元に戻す">↩<span class="t"> 元に戻す</span></button>
+  <button class="g" id="redoBtn" onclick="redo()" aria-label="やり直す">↪<span class="t"> やり直す</span></button>
+  <button class="g" id="syncBtn" onclick="syncClick()">🔗 共有ファイル</button>
+  <span id="lastBk"></span>
   <div id="modes"></div>
   <div id="status"></div>
 </header>
 <nav id="nav"></nav>
 <main id="view"></main>
-<footer style="text-align:center;padding:8px 16px 24px;font-size:13px"><a href="privacy.html" target="_blank" rel="noopener" style="color:var(--sub)">プライバシーポリシー</a></footer>
+<footer><a href="privacy.html" target="_blank" rel="noopener">プライバシーポリシー</a></footer>
 <dialog id="dlg"><form method="dialog" id="frm"></form></dialog>
 <div id="tip" popover="manual"></div>
 <div id="toast" hidden></div>
