@@ -1,4 +1,5 @@
-// 共有ファイル連携（クラウド同期フォルダのファイルを自動で読み書き） "use strict";
+"use strict";
+// 共有ファイル連携（クラウド同期フォルダのファイルを自動で読み書き）
 /* ========== 共有ファイル連携 ==========
    OneDrive / Google Drive などで同期しているフォルダの JSON ファイルを、アプリが直接読み書きする。
    ・入力するたびに自動でファイルへ保存
@@ -66,7 +67,7 @@ const validData=o=>!!o&&Array.isArray(o.expenses)&&Array.isArray(o.fields)
   &&["settings","yearly","cropColors"].every(k=>o[k]===undefined||(o[k]&&typeof o[k]=="object"&&!Array.isArray(o[k])));
 function applyRemote(obj,f){
   const lastBackup=db.lastBackup;
-  db=Object.assign(empty(),obj);
+  db=fixDb(obj);
   db.lastBackup=lastBackup;db.backupDirty=true;db.dirty=false;
   sync.baseRev=db.rev||0;sync.lastMod=f.lastModified;sync.baseText=ledgerSignature(obj);sync.conflict=null;
   persistLocal();

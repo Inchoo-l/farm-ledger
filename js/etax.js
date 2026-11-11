@@ -1,4 +1,5 @@
-// e-Tax入力ガイド（決算書の項目順に金額を表示・コピー） "use strict";
+"use strict";
+// e-Tax入力ガイド（決算書の項目順に金額を表示・コピー）
 /* ========== e-Tax 入力ガイド（決算書の項目順に金額を並べ、コピーできる） ========== */
 const yr=()=>db.yearly&&db.yearly[year]||{};
 function setYr(k,v){db.yearly=db.yearly||{};db.yearly[year]=Object.assign({},yr(),{[k]:Math.max(0,+v||0)});save();render();}
@@ -32,7 +33,7 @@ function etaxData(){
   const sum=ks=>sl.filter(s=>ks.includes(s.kind)).reduce((a,s)=>a+(+s.amount||0),0);
   Object.assign(d,{hanbai:sum(["出荷売上（JA等）","直売・相対売上"]),kaji:sum(["家事消費"]),jigyo:sum(["事業消費"]),
     zatsu:sum(["補助金・交付金","その他の収入"])});
-  d.assets=d.assets.filter(r=>r.a.acquireDate&&new Date(r.a.acquireDate).getFullYear()<=year);
+  d.assets=d.assets.filter(r=>/^\d{4}-/.test(String(r.a.acquireDate||""))&&+r.a.acquireDate.slice(0,4)<=year); // 取得年は文字から読む（new Date() は時差でずれることがある）
   // 作物別の収入明細
   const crops=Object.create(null);
   db.plantings.filter(p=>p.year==year).forEach(p=>{
@@ -75,7 +76,7 @@ function etaxView(){
       <div>${num("fam","専従者給与（家族に払った給料・円）","専従者給与")}</div>
     </div></div>
 
-  <div class="card"><h2>② 収入金額</h2><div class="scroll"><table>
+  <div class="card"><h2>② 収入金額</h2><div class="scroll"><table class="et">
     <tr><th>決算書の項目</th><th class="n">金額(円)</th><th></th></tr>
     ${row("販売金額（JA出荷・直売）",d.hanbai,"出荷売上（JA等）")}
     ${row("家事消費の金額",d.kaji,"家事消費")}
@@ -86,7 +87,7 @@ function etaxView(){
     ${row("収入金額の計（販売＋家事＋事業＋雑収入＋期末－期首）",d.incomeTotal,"収入金額",true)}
   </table></div></div>
 
-  <div class="card"><h2>③ 経費</h2><div class="scroll"><table>
+  <div class="card"><h2>③ 経費</h2><div class="scroll"><table class="et">
     <tr><th>決算書の項目</th><th class="n">金額(円)</th><th></th></tr>
     ${CATS.map(c=>row(c,d.cat[c],c)).join("")}
     ${row("専従者給与",d.fam,"専従者給与")}
@@ -96,10 +97,10 @@ function etaxView(){
 
   <div class="card"><h2>④ 減価償却費の計算</h2><div class="scroll"><table>
     <tr><th>資産</th><th>取得年月</th><th class="n">取得価額</th><th>償却方法</th><th class="n">耐用年数</th><th class="n">償却率${q("償却率")}</th><th class="n">償却月数</th><th class="n">本年分の償却費</th><th class="n">事業専用割合</th><th class="n">必要経費に入れる額</th><th></th><th class="n">未償却残高</th></tr>
-    ${d.assets.map(r=>`<tr><td>${esc(r.a.name)}</td><td>${hy(esc((r.a.acquireDate||"").slice(0,7)))}</td><td class="n">${yen(r.a.cost)}</td><td>定額法</td><td class="n">${r.a.life}</td><td class="n">${r.rate.toFixed(3)}</td><td class="n">${r.months}</td><td class="n">${yen(r.dep)}</td><td class="n">${r.a.ratio===""||r.a.ratio==null?100:r.a.ratio}%</td><td class="n"><b>${yen(r.biz)}</b></td><td><button class="g" onclick="copyVal(${r.biz},this)">コピー</button></td><td class="n">${yen(r.rest)}</td></tr>`).join("")||`<tr><td colspan="12" class="hint">登録された資産はありません</td></tr>`}
+    ${d.assets.map(r=>`<tr><td>${esc(r.a.name)}</td><td>${hy(esc((r.a.acquireDate||"").slice(0,7)))}</td><td class="n">${yen(r.a.cost)}</td><td>定額法</td><td class="n">${esc(r.a.life)}</td><td class="n">${r.rate.toFixed(3)}</td><td class="n">${r.months}</td><td class="n">${yen(r.dep)}</td><td class="n">${esc(r.a.ratio===""||r.a.ratio==null?100:r.a.ratio)}%</td><td class="n"><b>${yen(r.biz)}</b></td><td><button class="g" onclick="copyVal(${r.biz},this)">コピー</button></td><td class="n">${yen(r.rest)}</td></tr>`).join("")||`<tr><td colspan="12" class="hint">登録された資産はありません</td></tr>`}
   </table></div></div>
 
-  <div class="card"><h2>⑤ 差引金額と所得金額</h2><div class="scroll"><table>
+  <div class="card"><h2>⑤ 差引金額と所得金額</h2><div class="scroll"><table class="et">
     <tr><th>決算書の項目</th><th class="n">金額(円)</th><th></th></tr>
     ${row("差引金額（収入金額－経費）",d.diff,"差引金額")}
     ${row("青色申告特別控除額",d.ded,"青色申告特別控除")}
@@ -108,10 +109,10 @@ function etaxView(){
 
   <div class="card"><h2>⑥ 収入金額の明細（作物別）</h2><div class="scroll"><table>
     <tr><th>作物・品種</th><th class="n">作付面積</th><th class="n">収量(kg)</th><th class="n">収入(売上と紐づけた分)</th></tr>
-    ${Object.entries(d.crops).map(([k,c])=>`<tr><td>${esc(k)}</td><td class="n">${c.area?`${c.area}a（${tanbaStr(c.area)}）`:"-"}</td><td class="n">${c.yield?yen(c.yield):"-"}</td><td class="n">${yen(c.rev)}</td></tr>`).join("")||`<tr><td colspan="4" class="hint">作付が未登録です</td></tr>`}
+    ${Object.entries(d.crops).map(([k,c])=>`<tr><td>${esc(k)}</td><td class="n">${c.area?`${esc(c.area)}a（${tanbaStr(c.area)}）`:"-"}</td><td class="n">${c.yield?yen(c.yield):"-"}</td><td class="n">${yen(c.rev)}</td></tr>`).join("")||`<tr><td colspan="4" class="hint">作付が未登録です</td></tr>`}
   </table></div><p class="hint">売上を作付に紐づけていないと、ここの収入は0円になります。</p></div>
 
-  <div class="card"><h2>⑦ 地代・賃借料の内訳（支払先別）</h2><div class="scroll"><table>
+  <div class="card"><h2>⑦ 地代・賃借料の内訳（支払先別）</h2><div class="scroll"><table class="et">
     <tr><th>支払先</th><th class="n">金額(円)</th><th></th></tr>
     ${Object.entries(d.rents).map(([k,v])=>row(esc(k),v)).join("")||`<tr><td colspan="3" class="hint">小作料・賃借料の経費はありません</td></tr>`}
   </table></div></div>`;

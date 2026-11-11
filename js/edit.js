@@ -1,4 +1,5 @@
-// 入力画面（追加・編集・削除・口座の一括割り当て） "use strict";
+"use strict";
+// 入力画面（追加・編集・削除・口座の一括割り当て）
 // 売上：家事消費・事業消費はお金が動かないので、口座欄を使えなくする（それ以外は口座が必須）
 function syncAcct(){
   try{
@@ -26,7 +27,7 @@ function edit(name,id,from,pre){ // pre＝新規入力のとき、あらかじ�
     const r=id?db[name].find(x=>x.id==id):(src?Object.assign({},src,{date:today()}):Object.assign({},pre||{}));
     if((id&&!r)||(from&&!src))throw new Error("対象のデータが見つかりません");
     const opts=(c)=>{
-      if(c.t=="select")return c.o.map(o=>`<option value="${esc(o)}" ${r[c.k]==o?"selected":""}>${esc(optLabel(o))}</option>`).join("");
+      if(c.t=="select")return c.o.map(o=>`<option value="${esc(o)}" ${r[c.k]==o?"selected":""}>${esc(["category","kind"].includes(c.k)?optLabel(o):o)}</option>`).join("");
       if(c.t=="field")return `<option value=""></option>`+db.fields.filter(f=>inMode(f)||r[c.k]==f.id).map(f=>`<option value="${f.id}" ${r[c.k]==f.id?"selected":""}>${esc(f.name)}</option>`).join("");
       if(c.t=="plot")return `<option value=""></option>`+(db.plots||[]).map(p=>`<option value="${p.id}" data-f="${p.fieldId}" ${r[c.k]==p.id?"selected":""}>${esc(p.name)}</option>`).join("");
       if(c.t=="planting")return `<option value="">共通（特定の作付に紐づけない）</option>`+db.plantings.filter(p=>r[c.k]==p.id||(inMode(p)&&(!p.year||Math.abs(p.year-year)<=1))).map(p=>`<option value="${p.id}" ${r[c.k]==p.id?"selected":""}>${esc(plantLabel(p))}</option>`).join("");
@@ -41,17 +42,16 @@ function edit(name,id,from,pre){ // pre＝新規入力のとき、あらかじ�
         +(c.t=="account"?`<div class="hint" id="ac_hint" data-d="${name=="expenses"?"この口座から金額が引き落とされます。":"この口座に金額が加算されます。"}" style="margin-top:4px"></div>`:"");
       else if(c.t=="area"){
         const t=val===""?{cho:"",tan:"",se:""}:toTanba(+val);
-        const st="width:70px;display:inline-block";
-        inp=`<div><input id="ar_a" name="${c.k}" type="number" step="0.01" min="0" required value="${esc(val)}" style="width:100px;display:inline-block" oninput="areaSync('a')"> a　＝
-          <input id="ar_cho" type="number" step="1" min="0" value="${t.cho}" style="${st}" oninput="areaSync('x')">町
-          <input id="ar_tan" type="number" step="1" min="0" value="${t.tan}" style="${st}" oninput="areaSync('x')">反
-          <input id="ar_se" type="number" step="0.01" min="0" value="${t.se}" style="${st}" oninput="areaSync('x')">畝</div>`;
+        // 数字の欄と単位を1組にして並べる（スマホの幅で、単位だけが次の行に落ちないように）
+        const u=(id,v,unit,step,extra)=>`<span class="au"><input id="${id}" type="number" inputmode="decimal" step="${step}" min="0" value="${esc(v)}" ${extra||""}>${unit}</span>`;
+        inp=`<div class="area">${u("ar_a",val,"a","0.01",`name="${c.k}" required oninput="areaSync('a')"`)}<span class="eq">＝</span>
+          ${u("ar_cho",t.cho,"町","1",`oninput="areaSync('x')"`)}${u("ar_tan",t.tan,"反","1",`oninput="areaSync('x')"`)}${u("ar_se",t.se,"畝","0.01",`oninput="areaSync('x')"`)}</div>`;
       }
       else if(c.t=="date")inp=`<input name="${c.k}" type="text" inputmode="none" autocomplete="off" placeholder="日付を押すとカレンダーが開きます" pattern="[0-9]{4}-[0-9]{2}-[0-9]{2}" maxlength="10" ${c.req===1?"required":""} value="${esc(val)}"><div class="cal" id="cal_${c.k}" hidden></div>`;
       else if(c.t=="check")inp=`<input type="checkbox" name="${c.k}" ${(name=="plantings"&&(c.k=="mulch"||c.k=="straw")?coverOf(r)[c.k]:r[c.k])?"checked":""}>`; // 作付の被覆資材は、古いデータなら区画のチェックを引き継いで表示
-      else inp=`<input name="${c.k}" type="${c.t||"text"}" ${c.step?`step="${c.step}"`:""} ${c.min!=null?`min="${c.min}"`:""} ${c.max!=null?`max="${c.max}"`:""} ${c.req===1?"required":""} value="${esc(val)}">`;
+      else inp=`<input name="${c.k}" type="${c.t||"text"}" ${c.t=="number"?'inputmode="decimal"':""} ${c.step?`step="${c.step}"`:""} ${c.min!=null?`min="${c.min}"`:""} ${c.max!=null?`max="${c.max}"`:""} ${c.req===1?"required":""} value="${esc(val)}">`;
       // 必須の項目には赤い※を付ける（req:2 は「※は付けるが入力欄の必須チェックは別の方法で行う」項目）
-      return `<div class="fld" data-k="${c.k}"><label>${c.l}<span class="rq" ${c.req?"":"hidden"}>※</span>${c.g?q(c.g):""}</label>${inp}</div>`;
+      return `<div class="fld" data-k="${c.k}"><label>${mode=="hat"&&c.k=="yield"?"収量(kg)":c.l}<span class="rq" ${c.req?"":"hidden"}>※</span>${c.g?q(c.g):""}</label>${inp}</div>`;
     }).join("");
     const legend=`<p class="hint"><span class="rq" style="margin:0">※</span> は必ず入力する項目です${name=="expenses"?"。勘定科目を選ぶと、その科目に必要な項目だけが表示されます。":""}</p>`;
     // 経費・売上は、田んぼと畑のどちらの記録かを入力画面の見出しに出す（新規は今のモード、編集は記録に付いている区別）
@@ -152,7 +152,11 @@ function del(name,id){
     }
     const msg=name=="fields"&&(db.plots||[]).some(p=>p.fieldId==id)?"削除しますか？\nこの畑の区画（地図の配置）も一緒に消えます。":name=="plots"?"この区画を削除しますか？\nこの区画の作付は消えず、区画だけ未設定になります。":name=="plantings"?"この作付を削除しますか？\n紐づいている経費・売上は残り、作付との紐づけが外れます。経費は共通費になります。":"削除しますか？";
     if(!confirm(msg))return;
-    if(name=="fields")db.plots=(db.plots||[]).filter(p=>p.fieldId!=id);
+    if(name=="fields"){
+      const ids=new Set((db.plots||[]).filter(p=>p.fieldId==id).map(p=>p.id));
+      db.plots=(db.plots||[]).filter(p=>p.fieldId!=id);
+      db.plantings.forEach(p=>{if(ids.has(p.plotId))p.plotId="";}); // 消えた区画を指したままにしない
+    }
     if(name=="plots")db.plantings.forEach(p=>{if(p.plotId==id)p.plotId="";});
     if(name=="plantings")[...db.expenses,...db.sales].forEach(r=>{if(r.plantingId==id)r.plantingId="";});
     db[name]=db[name].filter(x=>x.id!=id);save();render();

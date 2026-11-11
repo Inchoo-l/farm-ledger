@@ -1,17 +1,16 @@
-// 入力画面の共通部品（科目ごとの項目の出し分け・日付チェック） "use strict";
+"use strict";
+// 入力画面の共通部品（科目ごとの項目の出し分け・日付チェック）
 /* ========== 入力ダイアログ ========== */
 // 経費の勘定科目ごとに、必要な入力項目だけを表示する
 const QTY_CATS=["種苗費","素畜費","肥料費","飼料費","農具費","農薬衛生費","諸材料費","動力光熱費"]; // 数量×単価が自然な科目
 const NOLINK_CATS=["租税公課","作業用衣料費","農業共済掛金","利子割引料","貸倒金","雑費"];          // 特定の作付に紐づけにくい科目
 const NOINVOICE_CATS=["租税公課","農業共済掛金","利子割引料","雇人費","貸倒金"];                    // インボイスと無関係な科目
-const NOPAY_CATS=["貸倒金"];                                                                       // 実際には支払いがない科目
 function expShow(k,cat){
   switch(k){
     case "variety":return cat=="種苗費";
     case "qty":case "unitPrice":return QTY_CATS.includes(cat);
     case "plantingId":return !NOLINK_CATS.includes(cat);
     case "invoice":return !NOINVOICE_CATS.includes(cat);
-    case "pay":return !NOPAY_CATS.includes(cat);
     default:return true;
   }
 }

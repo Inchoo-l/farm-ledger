@@ -1,4 +1,5 @@
-// 経費科目・入力項目の定義・田んぼ/畑/全体の切り替え "use strict";
+"use strict";
+// 経費科目・入力項目の定義・田んぼ/畑/全体の切り替え
 /* 青色申告決算書（農業所得用）の経費科目 */
 const CATS=["租税公課","種苗費","素畜費","肥料費","飼料費","農具費","農薬衛生費","諸材料費","修繕費","動力光熱費","作業用衣料費","農業共済掛金","荷造運賃手数料","雇人費","小作料・賃借料","利子割引料","土地改良費","貸倒金","雑費"];
 const SALE_KINDS=["出荷売上（JA等）","直売・相対売上","家事消費","事業消費","補助金・交付金","その他の収入"];
@@ -23,7 +24,7 @@ const ENT={
   {k:"name",l:"圃場名",req:1},{k:"area",l:"面積（a／町・反・畝のどれで入力してもOK）",t:"area",req:1},
   {k:"tenure",l:"区分",t:"select",o:["自作地","借地"]},{k:"rent",l:"年間小作料(円)",t:"number"},{k:"note",l:"メモ"}]},
  plantings:{title:"作付",cols:[
-  {k:"year",l:"年産",t:"number",req:1,min:1,max:9999,def:()=>year},
+  {k:"year",l:"年産",t:"number",req:1,min:1,max:9999,raw:1,def:()=>year}, // raw＝一覧でカンマを付けない（2,026 にしない）
   {k:"fieldId",l:"圃場",t:"field",req:1},
   {k:"plotId",l:"区画（畑の中の区画マップで使います）",t:"plot"},
   {k:"variety",l:"品種・作物（例：コシヒカリ／ネギ）",req:1},
@@ -74,7 +75,7 @@ const ENT={
   {k:"asOf",l:"開始残高の日付",t:"date",def:()=>today()},{k:"note",l:"メモ"}]},
  assets:{title:"減価償却資産",cols:[
   {k:"name",l:"資産名（トラクター等）",req:1},{k:"acquireDate",l:"取得日（使い始めた日）",t:"date",req:1},
-  {k:"cost",l:"取得価額(円)",t:"number",req:1,min:1},{k:"life",l:"耐用年数(年)",t:"number",req:1,min:1},
+  {k:"cost",l:"取得価額(円)",t:"number",req:1,min:1},{k:"life",l:"耐用年数(年)",t:"number",req:1,min:1,step:"1"},
   {k:"ratio",l:"事業専用割合(%)",t:"number",min:0,max:100,def:()=>100},{k:"note",l:"メモ"}]},
 };
 /* ===== 田んぼ / 畑 / 全体 の切り替え =====

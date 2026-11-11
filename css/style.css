@@ -5,12 +5,22 @@
 /* モードごとに全体の色を切り替える（田んぼ=緑 / 畑=茶 / 全体=青） */
 body.hat{--main:var(--hat);--main2:var(--hat2)}
 body.all{--main:var(--allc);--main2:var(--all2)}
+/* --fill＝白い文字をのせる「塗り」の色（ヘッダー・塗りボタンなど）。
+   明るい画面では --main と同じ。暗い画面（ダークモード）では --main が明るい色になり白い文字が読みにくいので、濃い色にする */
+body{--fill:var(--main)}
+@media(prefers-color-scheme:dark){body{--fill:#2e7d32}body.hat{--fill:#9a5f12}body.all{--fill:#3d5a80}}
 #modes{flex-basis:100%;display:flex;gap:8px}
 #modes button{flex:1;max-width:220px;padding:10px 0;font-size:18px;font-weight:bold;border:2px solid #fff;border-radius:10px 10px 0 0;background:#fff3;color:#fff;cursor:pointer}
-#modes button.on{background:#fff;color:var(--main)}
+#modes button.on{background:#fff;color:var(--fill)}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 "Yu Gothic UI","Hiragino Sans","Hiragino Kaku Gothic ProN","Meiryo",sans-serif;-webkit-text-size-adjust:100%}
-header{background:var(--main);color:#fff;padding:10px 16px;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+header{background:var(--fill);color:#fff;padding:10px 16px;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+header button.g{color:#fff;border-color:#fff}
+header label.yr{margin:0;color:#fff}
+#lastBk{font-size:13px}
+footer{text-align:center;padding:8px 16px 24px;font-size:13px}
+footer a{color:var(--sub)}
+a{color:var(--main)}
 header h1{font-size:18px;margin:0;flex:1}
 header select{font-size:15px;padding:3px}
 nav{display:flex;gap:2px;flex-wrap:wrap;padding:8px 12px 0;border-bottom:1px solid var(--line)}
@@ -24,7 +34,7 @@ th,td{padding:6px 8px;border-bottom:1px solid var(--line);text-align:left;white-
 th{background:var(--main2);font-weight:600}
 td.n,th.n{text-align:right}
 .scroll{overflow-x:auto}
-button.b{background:var(--main);color:#fff;border:0;border-radius:6px;padding:7px 14px;cursor:pointer;font-size:14px}
+button.b{background:var(--fill);color:#fff;border:0;border-radius:6px;padding:7px 14px;cursor:pointer;font-size:14px}
 button.g{background:none;color:var(--main);border:1px solid var(--main);border-radius:6px;padding:5px 10px;cursor:pointer;font-size:13px}
 button.d{color:var(--warn);border-color:var(--warn)}
 .bar{display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;align-items:center}
@@ -51,7 +61,7 @@ dialog[open]{display:flex;flex-direction:column;max-height:92vh;max-height:92dvh
 .cal .cg button.td{border-color:var(--main)}
 .cal .cg button.sun{color:var(--warn)}
 .cal .cg button.sat{color:#5b8fd6}
-.cal .cg button.sel{background:var(--main);color:#fff}
+.cal .cg button.sel{background:var(--fill);color:#fff}
 label{display:block;margin:8px 0 2px;font-size:13px;color:var(--sub)}
 input,select,textarea{width:100%;padding:7px;font-size:15px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--ink)}
 input[type=checkbox]{width:auto}
@@ -65,7 +75,7 @@ input[type=checkbox]{width:auto}
 #status .sthead{display:flex;justify-content:space-between;gap:12px;cursor:pointer;user-select:none;font-weight:bold}
 #status .sthead span:last-child{font-weight:normal;font-size:13px;white-space:nowrap;opacity:.9}
 /* 用語ヘルプ（? マーク）とふきだし */
-.q{display:inline-block;width:18px;height:18px;line-height:18px;border-radius:50%;background:var(--main);color:#fff;font-size:12px;text-align:center;cursor:pointer;margin-left:4px;font-weight:bold;vertical-align:middle;font-style:normal}
+.q{display:inline-block;width:18px;height:18px;line-height:18px;border-radius:50%;background:var(--fill);color:#fff;font-size:12px;text-align:center;cursor:pointer;margin-left:4px;font-weight:bold;vertical-align:middle;font-style:normal}
 #tip{position:fixed;margin:0;inset:auto;max-width:min(340px,92vw);background:var(--card);color:var(--ink);border:2px solid var(--main);border-radius:10px;padding:10px 12px;font-size:14px;box-shadow:0 4px 14px #0005;white-space:normal;line-height:1.6}
 #tip b{color:var(--main)}
 #tip .ex{display:block;margin-top:6px;background:var(--main2);border-radius:6px;padding:6px 8px;font-size:13px}
@@ -89,6 +99,19 @@ header button:disabled{opacity:.4;cursor:default}
 #toast[hidden]{display:none}
 .rq{color:#e53935;font-weight:bold;margin-left:3px}
 .fld[hidden]{display:none}
+/* 面積の入力（a ＝ 町・反・畝）：数字の欄と単位を1組にして、折り返しても単位が離れない */
+.area{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px}
+.area .au{display:inline-flex;align-items:center;gap:4px;white-space:nowrap}
+.area .au input{width:76px}
+.area .au:first-child input{width:104px}
+.area .eq{color:var(--sub)}
+/* e-Tax入力ガイドの表：項目名は折り返し、金額と「コピー」ボタンは折り返さない（狭い画面でもボタンが見える） */
+.et td:first-child,.et th:first-child{white-space:normal;min-width:9em}
+/* 一覧の右端の「複製・編集・削除」は、表を横にスクロールしても見えるように固定する（パソコン幅） */
+@media(min-width:721px){
+  .lt td.act,.lt tr.hd th:last-child{position:sticky;right:0}
+  .lt td.act{background:var(--card);box-shadow:-6px 0 6px -6px #0004}
+}
 .hint{color:var(--sub);font-size:13px}
 .warn{color:var(--warn)}
 
@@ -96,7 +119,13 @@ header button:disabled{opacity:.4;cursor:default}
 @media(max-width:720px){
   body{font-size:16px}
   header{padding:8px 10px;gap:8px}
-  header h1{font-size:15px;flex-basis:100%}
+  /* 1行目：アプリ名と年分／2行目：ボタン（元に戻す・やり直すは記号だけ）にまとめて、ヘッダーの高さをおさえる */
+  header h1{font-size:15px;flex:1 1 calc(100% - 140px);min-width:0}
+  header label.yr{display:flex;align-items:center;gap:6px;font-size:13px;white-space:nowrap;flex:none}
+  header button.g{min-height:36px;padding:4px 9px}
+  header button .t{display:none}
+  #undoBtn,#redoBtn{min-width:40px;font-size:16px}
+  #syncBtn{flex:1 1 0;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px}
   #lastBk{flex-basis:100%;font-size:12px}
   #modes{gap:4px}
   #modes button{max-width:none;font-size:15px;padding:9px 0;border-radius:8px 8px 0 0}
@@ -163,7 +192,7 @@ header button:disabled{opacity:.4;cursor:default}
 /* ===== 区画マップの追加分：サブタブ・藁/マルチ・時間軸・スマホ調整・Safari対応 ===== */
 .subtab{display:inline-flex;gap:4px}
 .subtab button{border:1px solid var(--main);background:none;color:var(--main);padding:6px 12px;border-radius:16px;cursor:pointer;font-size:14px;touch-action:manipulation}
-.subtab button.on{background:var(--main);color:#fff;font-weight:bold}
+.subtab button.on{background:var(--fill);color:#fff;font-weight:bold}
 .chk{display:inline-flex;align-items:center;gap:6px;margin:0;color:var(--ink);font-size:15px;cursor:pointer}
 .chk input{width:22px;height:22px;margin:0}
 .sw{display:inline-block;width:14px;height:14px;border-radius:3px;vertical-align:middle}
