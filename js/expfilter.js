@@ -1,4 +1,5 @@
-// 経費の絞り込みと検索（経費タブの上の検索ボックスと絞り込みパネル） "use strict";
+"use strict";
+// 経費の絞り込みと検索（経費タブの上の検索ボックスと絞り込みパネル）
 /* ========== 経費の検索・絞り込み ==========
    ・絞り込み（日付・勘定科目・摘要・品種・取引先・金額・口座・作付・インボイス）は、すべて「かつ(AND)」で組み合わせる
    ・検索は、経費のすべての項目（メモなど一覧に出していない項目も）が対象。スペースで区切ると、すべての語を含む行だけ（AND）
@@ -115,7 +116,7 @@ function expHiddenHits(r,tokens){
     let a=0,b=text.length,pre="",post="";
     if(text.length>70){a=Math.max(0,rg[0][0]-20);b=Math.min(text.length,rg[0][0]+50);pre=a>0?"…":"";post=b<text.length?"…":"";}
     const sub=text.slice(a,b),rr=rg.map(x=>[x[0]-a,x[1]-a]).filter(x=>x[1]>0&&x[0]<sub.length).map(x=>[Math.max(0,x[0]),Math.min(sub.length,x[1])]);
-    const label=c.l.split("（")[0].split(" ※")[0];
+    const label=colLabel(c);
     return `<div class="hit">${esc(label)}：${pre}${expMarkHtml(sub,rr)}${post}</div>`;
   }).filter(Boolean);
   return lines.join("");
@@ -139,7 +140,7 @@ function expFilterRows(rows){
     if(max!=null&&!isNaN(max)&&amt>max)return false;
     if(expF.acct==="none"){if(hasAcct(r))return false;}
     else if(expF.acct!==""&&String(r.accountId)!==expF.acct)return false;
-    if(expF.plant==="common"){if(r.plantingId)return false;}
+    if(expF.plant==="common"){if(!noPlanting(r))return false;}
     else if(expF.plant!==""&&String(r.plantingId)!==expF.plant)return false;
     if(expF.inv==="yes"&&!r.invoice)return false;
     if(expF.inv==="no"&&r.invoice)return false;
@@ -155,7 +156,7 @@ const expActive=()=>expCount()>0;
 
 /* ----- 画面 ----- */
 // 年分で絞った経費（今のモードのもの）
-const expYearRows=()=>[...db.expenses.filter(r=>inYear(r.date)&&inMode(r))].sort((a,b)=>a.date<b.date?1:-1);
+const expYearRows=()=>db.expenses.filter(r=>inYear(r.date)&&inMode(r)).sort(byDateDesc);
 
 // 件数・合計・表（検索や絞り込みのたびに、ここだけ描き直す。入力欄は触らないので、文字を打ち続けられる）
 function expResult(){
@@ -163,12 +164,11 @@ function expResult(){
   const cols=TABLE_COLS.expenses.map(k=>ENT.expenses.cols.find(c=>c.k==k));
   const total=rows.reduce((s,r)=>s+(+r.amount||0),0);
   const head=`<div class="bar"><span><b>${year}年 合計：${yen(total)} 円</b>（${rows.length}件${expActive()?`／全${all.length}件中`:""}）</span></div>`;
-  const body=rows.map(r=>`<tr>${cols.map(c=>`<td class="${c.t=="number"?"n":""}" data-label="${esc(c.l.split("（")[0].split(" ※")[0])}">${cell("expenses",c,r)}</td>`).join("")}
-      <td class="act"><button class="g" onclick="edit('expenses',null,${r.id})">複製</button> <button class="g" onclick="edit('expenses',${r.id})">編集</button> <button class="g d" onclick="del('expenses',${r.id})">削除</button></td></tr>`).join("");
+  const body=rows.map(r=>listRow("expenses",cols,r)).join("");
   const empty=all.length
     ?`<tr><td colspan="${cols.length+1}" class="hint">条件に合う経費がありません。<button class="g" onclick="expClear()">条件をクリア</button></td></tr>`
     :`<tr><td colspan="${cols.length+1}" class="hint">データがありません</td></tr>`;
-  return `${head}<div class="scroll"><table class="lt"><tr class="hd">${cols.map(c=>`<th class="${c.t=="number"?"n":""}">${c.l.split("（")[0].split(" ※")[0]}${c.g?q(c.g):""}</th>`).join("")}<th></th></tr>${body||empty}</table></div>`;
+  return `${head}<div class="scroll"><table class="lt">${listHead(cols)}${body||empty}</table></div>`;
 }
 
 function expPanel(){

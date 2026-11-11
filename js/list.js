@@ -1,6 +1,20 @@
-// 一覧画面（経費・売上・作付などの表） "use strict";
+"use strict";
+// 一覧画面（経費・売上・作付などの表）
 /* 一覧や表の「入力がない場所」はハイフンで表示する */
 const hy=v=>(v===""||v==null||v===false)?"-":v;
+// 一覧の見出しに出す項目名（入力画面用の長い説明「（…）」「 ※…」は取り除く。畑では米向けの言葉を外す）
+function colLabel(c){
+  let l=c.l.split("（")[0].split(" ※")[0];
+  if(mode=="hat"&&c.k=="yield")l="収量(kg)";
+  return l;
+}
+// 一覧の表の見出し行と、記録1件ぶんの行（経費の検索表示 expfilter.js でも同じものを使う）
+const listHead=cols=>`<tr class="hd">${cols.map(c=>`<th class="${c.t=="number"?"n":""}">${esc(colLabel(c))}${c.g?q(c.g):""}</th>`).join("")}<th></th></tr>`;
+function listRow(name,cols,r){
+  const dup=name=="expenses"||name=="sales"; // 経費・売上は「複製」できる
+  return `<tr>${cols.map(c=>`<td class="${c.t=="number"?"n":""}" data-label="${esc(colLabel(c))}">${cell(name,c,r)}</td>`).join("")}
+      <td class="act">${dup?`<button class="g" onclick="edit('${name}',null,${+r.id})">複製</button> `:""}<button class="g" onclick="edit('${name}',${+r.id})">編集</button> <button class="g d" onclick="del('${name}',${+r.id})">削除</button></td></tr>`;
+}
 function cell(ent,c,r){
   const v=r[c.k];
   try{
@@ -15,6 +29,7 @@ function cell(ent,c,r){
     else if(c.t=="account"){const a=db.accounts.find(x=>x.id==v);out=a?esc(a.name):"";}
     else if(c.t=="area")out=v===""||v==null?"":`${esc(v)}a（${tanbaStr(v)}）`;
     else if(c.t=="check")out=v?"✔":"";
+    else if(c.raw)out=esc(v); // 年産など、カンマを付けない数字
     else if(c.t=="number"&&v!==""&&v!=null)out=yen(v);
     else out=esc(v);
     return hy(out);
@@ -31,7 +46,7 @@ function listView(name){
   const title=name=="fields"?MODE_NAME[mode]+"の一覧":E.title;
   if(name=="expenses"||name=="sales")rows=rows.filter(r=>inYear(r.date));
   if(name=="plantings")rows=rows.filter(r=>r.year==year);
-  if(name=="expenses"||name=="sales")rows=[...rows].sort((a,b)=>a.date<b.date?1:-1);
+  if(name=="expenses"||name=="sales")rows=[...rows].sort(byDateDesc);
   const cols=TABLE_COLS[name].filter(k=>!(mode=="hat"&&k=="rent")&&!(mode!="hat"&&(k=="plotId"||k=="cover"))).map(k=>E.cols.find(c=>c.k==k));
   let total="";
   if(name=="expenses"||name=="sales")total=`<span><b>${year}年 合計：${yen(rows.reduce((s,r)=>s+(+r.amount||0),0))} 円</b>（${rows.length}件）</span>`;
@@ -50,9 +65,8 @@ function listView(name){
   return `<div class="card"><div class="bar"><h2 style="margin:0">${title}</h2>
     <button class="b" onclick="edit('${name}')">＋ 追加</button>${total}
     ${(name=="expenses"||name=="sales")?`<button class="g" onclick="csv('${name}')">CSV出力（${year}年）</button>`:""}</div>${hint}
-    <div class="scroll"><table class="lt"><tr class="hd">${cols.map(c=>`<th class="${c.t=="number"?"n":""}">${c.l.split("（")[0].split(" ※")[0]}${c.g?q(c.g):""}</th>`).join("")}<th></th></tr>
-    ${rows.map(r=>`<tr>${cols.map(c=>`<td class="${c.t=="number"?"n":""}" data-label="${esc(c.l.split("（")[0].split(" ※")[0])}">${cell(name,c,r)}</td>`).join("")}
-      <td class="act">${(name=="expenses"||name=="sales")?`<button class="g" onclick="edit('${name}',null,${r.id})">複製</button> `:""}<button class="g" onclick="edit('${name}',${r.id})">編集</button> <button class="g d" onclick="del('${name}',${r.id})">削除</button></td></tr>`).join("")
+    <div class="scroll"><table class="lt">${listHead(cols)}
+    ${rows.map(r=>listRow(name,cols,r)).join("")
       ||`<tr><td colspan="${cols.length+1}" class="hint">データがありません</td></tr>`}
     </table></div></div>`;
 }
