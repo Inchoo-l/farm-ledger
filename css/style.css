@@ -270,7 +270,9 @@ mark{background:#ffe08a;color:#222;border-radius:2px;padding:0 1px}
 .lt td .hit{white-space:normal;font-size:12px;color:var(--sub);margin-top:2px;max-width:340px}
 /* 全体モード：田んぼと畑を並べて別々に集計 */
 .dsec{font-size:17px;margin:18px 0 8px;padding-left:8px;border-left:5px solid var(--main)}
-.dgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:start}
+.dgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:start;margin-bottom:16px}
+/* 説明文の中の選択欄（控除額・面積の換算）は、画面いっぱいに広げない */
+.hint select{width:auto;max-width:100%}
 .dgrid .card{margin-bottom:0;min-width:0}
 .dcol h2{font-size:17px}
 .dh{font-size:14px;margin:14px 0 4px;color:var(--sub)}
