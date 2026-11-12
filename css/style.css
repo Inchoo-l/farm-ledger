@@ -45,7 +45,7 @@ dialog{border:1px solid var(--line);border-radius:10px;background:var(--card);co
 dialog::backdrop{background:#0006}
 /* 入力画面：中身だけスクロールし、キャンセル／確定ボタンは常に下に表示する */
 dialog[open]{display:flex;flex-direction:column;max-height:92vh;max-height:92dvh}
-#frm{display:flex;flex-direction:column;min-height:0;flex:1;margin:0}
+#frm,#qsFrm{display:flex;flex-direction:column;min-height:0;flex:1;margin:0}
 #frm h2{flex:none}
 .fbody{flex:1;min-height:0;overflow-y:auto;padding:0 4px 8px 0}
 .fbar{flex:none;display:flex;flex-direction:row-reverse;gap:10px;border-top:1px solid var(--line);padding-top:12px;margin-top:6px}
@@ -158,19 +158,28 @@ header button:disabled{opacity:.4;cursor:default}
 }
 
 /* 区画マップ */
-.mapsvg{width:100%;min-width:720px;height:auto;display:block;background:var(--card);border:1px solid var(--line);border-radius:8px}
-.mapsvg .grid{fill:none;stroke:var(--line);stroke-width:1}
+/* 畑らしい色：--ground＝地面／--soil＝区画の土／--soil2＝土の縁／--aze＝畑の外周（あぜ）の草 */
+.mapsvg{--ground:#efe6d3;--soil:#8a6748;--soil2:#5b412b;--aze:#8bb04a;--gridc:rgba(110,80,40,.16)}
+@media(prefers-color-scheme:dark){.mapsvg{--ground:#29241c;--soil:#6f5239;--soil2:#33251a;--aze:#5f7d33;--gridc:rgba(255,235,200,.07)}}
+.mapsvg{width:100%;min-width:720px;height:auto;display:block;background:var(--ground);border:1px solid var(--line);border-radius:12px}
+.mapsvg .grid{fill:none;stroke:var(--gridc);stroke-width:1}
+.mapsvg .aze{fill:none;stroke:var(--aze);stroke-width:6;stroke-opacity:.75;pointer-events:none}
 .mapsvg .fz{cursor:pointer}
 .mapsvg.edit .fz{cursor:move;touch-action:none}
-.mapsvg .fz .bg{fill:var(--card);stroke:var(--sub);stroke-width:2;stroke-dasharray:6 4}
-.mapsvg .fz.grow .bg{fill:var(--cu,var(--card));stroke:rgba(0,0,0,.35);stroke-dasharray:none}
-.mapsvg .fz.plan .bg{fill:var(--main2);stroke:var(--c);stroke-width:3;stroke-dasharray:none}
-.mapsvg .fz text{font-size:calc(14px*var(--fs,1));fill:var(--ink);pointer-events:none}
+/* 区画＝土の色に畝の筋（.rg）。自分で色を決めた区画（.tint）はその色。植付予定は、作物の色の点線で囲む */
+.mapsvg .fz .bg{fill:var(--soil);stroke:var(--soil2);stroke-width:2.5}
+.mapsvg .fz.tint .bg{fill:var(--cu)}
+.mapsvg .fz.plan .bg{stroke:var(--c);stroke-width:4;stroke-dasharray:10 6}
+.mapsvg .fz .rg{pointer-events:none}
+.mapsvg .fz text{font-size:calc(14px*var(--fs,1));fill:var(--t,#fff);pointer-events:none}
+/* 空いている区画の「＋ 植える」の印 */
+.mapsvg .pm{pointer-events:none}
+.mapsvg .pm rect{fill:#fff;fill-opacity:.92;stroke:var(--soil2);stroke-width:1.5}
+.mapsvg .pm text{fill:#2e7d32;font-weight:700}
+.mapsvg .fz:not(.grow):hover .pm rect{fill-opacity:1}
 .mapsvg .fz text.b{font-size:calc(15px*var(--fs,1));font-weight:700}
-.mapsvg .fz.grow text{fill:var(--t,var(--ink))}
 .mapsvg .fz.grow text.bt{fill:#fff;font-size:calc(13px*var(--fs,1))}
 .mapsvg .fz.grow text.bt.b{font-size:calc(14px*var(--fs,1))}
-.mapsvg .fz.tint .bg{fill:var(--c);fill-opacity:.3;stroke:var(--c)}
 .mapsvg .dir text{font-size:15px;font-weight:700;fill:var(--sub);pointer-events:none}
 .mapsvg .dir .nl{fill:#d32f2f}
 .mapsvg .rose{fill:var(--card);stroke:var(--sub);stroke-width:1.5;fill-opacity:.85}
@@ -292,12 +301,65 @@ mark{background:#ffe08a;color:#222;border-radius:2px;padding:0 1px}
   .maptop label select{flex:1;min-width:0}
   .maptop button{width:100%}
   /* 畑の選択と、畑を追加・畑の情報を編集のボタン */
-  .mapsel{margin-left:0;flex:1 1 100%;display:grid;grid-template-columns:1fr 1fr;gap:8px;min-width:0}
-  .mapsel select{grid-column:1/-1;min-width:0;width:100%}
-  .mapsel button{width:100%}
+  /* スマホでは、畑の選択の横に「⚙ 設定」。畑を追加・畑の情報を編集・地図の上の方角（.mapmore）は、設定を開いたときだけ出す（地図をすぐ見られるように） */
+  .mapsel{margin-left:0;flex:1 1 100%;display:flex;flex-wrap:wrap;gap:8px;min-width:0}
+  .mapsel select{flex:1 1 0;min-width:0;width:auto}
+  .mapsel .mapgear{display:inline-block;flex:none}
+  .mapmore{display:none!important}
+  .mapopen .mapsel .mapmore{display:inline-block!important;flex:1 1 calc(50% - 4px)}
+  .mapopen .maptop label.mapmore{display:flex!important}
   .subtab{flex-wrap:wrap}
   /* 経費の検索：入力欄を全幅に */
   .expsearch .sbox input{flex-basis:100%}
   .expf{grid-template-columns:1fr 1fr}
   .lt td .hit{max-width:none;text-align:right}
 }
+/* ===== 区画マップ：凡例・使い方・かんたん入力（mapquick.js） ===== */
+.maplg i.lgsoil{background:#8a6748;border:2px solid #5b412b}
+.maplg i.lgsoil.plan{border:2px dashed var(--main)}
+.maplead{margin:8px 0 4px}
+.maphelp{margin:0 0 8px}
+.maphelp summary{cursor:pointer;color:var(--main);font-size:13px;padding:4px 0;touch-action:manipulation}
+.mapgear{display:none} /* 「⚙ 設定」はスマホ幅だけ。PC幅では設定がいつも見えている */
+.fbar[hidden]{display:none}
+.qsmore{margin-top:12px;border-top:1px dashed var(--line);padding-top:6px}
+.qsmore summary{cursor:pointer;font-weight:700;font-size:15px;padding:8px 0;color:var(--main);touch-action:manipulation}
+/* かんたん入力の画面：PCは中央、スマホは画面の下から出る */
+dialog.sheet{width:min(540px,94vw);padding:14px 16px}
+.qsh{display:flex;align-items:flex-start;gap:10px;margin-bottom:8px}
+.qst{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.qst b{font-size:17px;overflow-wrap:anywhere}
+.qst span{font-size:13px;color:var(--sub)}
+.qsx{flex:none;min-width:40px;min-height:40px;font-size:16px}
+.qsbody label{margin-top:10px}
+.qsh3{font-size:15px;margin:14px 0 0;padding-top:12px;border-top:1px dashed var(--line)}
+.qsbody>.qsh3:first-child{border-top:0;padding-top:0;margin-top:0}
+/* 栽培中・予定の作物の行 */
+.qsl{display:flex;flex-direction:column;gap:8px}
+.qsc{display:flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:10px;padding:8px 10px;background:var(--bg)}
+.qsc .sw{flex:none;width:18px;height:18px;border-radius:5px}
+.qsn{flex:1;min-width:0;display:flex;flex-direction:column}
+.qsn b{overflow-wrap:anywhere}
+.qsn span{font-size:13px;color:var(--sub)}
+.qsc button{flex:none;min-height:40px;touch-action:manipulation}
+/* 選ぶボタン（前に植えた作物・◯日後） */
+.qchips{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:8px}
+.qchip{display:inline-flex;align-items:center;gap:6px;min-height:38px;padding:6px 12px;border:1px solid var(--line);border-radius:20px;background:var(--bg);color:var(--ink);font-size:14px;cursor:pointer;touch-action:manipulation}
+.qchip.on{border-color:var(--main);background:var(--main2);font-weight:700}
+.q2{display:grid;grid-template-columns:1fr 1fr;gap:0 12px}
+.q2 input[type=date]{width:100%;min-width:0;min-height:40px}
+#mapToast{position:fixed;left:50%;bottom:18px;transform:translate(-50%,20px);max-width:min(92vw,520px);background:#222;color:#fff;padding:10px 16px;border-radius:22px;font-size:14px;line-height:1.4;box-shadow:0 4px 16px #0006;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;z-index:50}
+#mapToast.on{opacity:1;transform:translate(-50%,0)}
+@media(prefers-reduced-motion:reduce){#mapToast{transition:none}}
+@media(max-width:720px){
+  dialog.sheet{width:100vw;max-width:100vw;margin:auto 0 0;border-radius:18px 18px 0 0;border-width:1px 0 0;padding:8px 12px calc(12px + env(safe-area-inset-bottom))}
+  dialog.sheet[open]{max-height:88vh;max-height:88dvh}
+  dialog.sheet form::before{content:"";display:block;width:44px;height:5px;border-radius:3px;background:var(--line);margin:0 auto 8px} /* つまみ */
+  .qsc{flex-wrap:wrap}
+  .qsn{flex-basis:calc(100% - 30px)}
+  .qsc button{flex:1}
+  .qchip{min-height:42px;font-size:15px}
+  .q2 input[type=date]{-webkit-appearance:none;appearance:none;text-align:left}
+}
+.mapsvg .fz:focus{outline:none}
+.mapsvg .fz:focus-visible .bg{stroke:#ffb300;stroke-width:5;stroke-dasharray:none} /* キーボードで選んでいる区画 */
