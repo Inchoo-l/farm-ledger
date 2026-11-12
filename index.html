@@ -14,11 +14,12 @@
   <h1>帳簿アプリ</h1>
   <label style="margin:0;color:#fff">年分
     <select id="year"></select></label>
-  <button class="g" style="color:#fff;border-color:#fff" onclick="backup()">💾 JSONで保存</button>
+  <button class="g" style="color:#fff;border-color:#fff" onclick="backup()">💾 バックアップを保存</button>
   <button class="g" id="undoBtn" style="color:#fff;border-color:#fff" onclick="undo()">↩ 元に戻す</button>
   <button class="g" id="redoBtn" style="color:#fff;border-color:#fff" onclick="redo()">↪ やり直す</button>
   <button class="g" id="syncBtn" style="color:#fff;border-color:#fff" onclick="syncClick()">🔗 共有ファイル</button>
-  <span id="lastBk" style="font-size:13px"></span>
+  <span id="lastBk" style="font-size:13px" role="status" aria-live="polite"></span>
+  <div id="saveError" role="alert" hidden></div>
   <div id="modes"></div>
   <div id="status"></div>
 </header>

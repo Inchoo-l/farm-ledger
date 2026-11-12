@@ -57,6 +57,10 @@ input,select,textarea{width:100%;padding:7px;font-size:15px;border:1px solid var
 input[type=checkbox]{width:auto}
 #status{flex-basis:100%;border-radius:6px;padding:6px 10px;font-size:14px;background:#fff3;}
 #status.ng{background:#b3261e;color:#fff}
+#status.checklist{background:#fff3cd;color:#493900}
+#status .sthead{width:100%;border:0;background:none;color:inherit;font:inherit;text-align:left;padding:4px 0}
+#saveError{flex-basis:100%;background:#b3261e;color:#fff;padding:8px 12px;border-radius:6px}
+#lastBk{white-space:pre-line}
 #status ul{margin:4px 0 0;padding-left:20px}
 #status .sthead{display:flex;justify-content:space-between;gap:12px;cursor:pointer;user-select:none;font-weight:bold}
 #status .sthead span:last-child{font-weight:normal;font-size:13px;white-space:nowrap;opacity:.9}
@@ -75,7 +79,7 @@ input[type=checkbox]{width:auto}
 .brow .trk i.cost{background:#c0504d}
 .brow b{width:130px;text-align:right;flex:none}
 .steps{display:flex;gap:8px;flex-wrap:wrap}
-.step{flex:1;min-width:150px;border:2px dashed var(--line);border-radius:10px;padding:10px;text-align:center;cursor:pointer;background:var(--card);color:var(--ink)}
+.step{flex:1;min-width:150px;border:2px dashed var(--line);border-radius:10px;padding:10px;text-align:center;cursor:pointer;background:var(--card);color:var(--ink);font:inherit}
 .step.done{border:2px solid var(--main);background:var(--main2)}
 .step b{display:block;font-size:16px}
 .step small{color:var(--sub)}
