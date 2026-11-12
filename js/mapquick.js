@@ -159,9 +159,14 @@ function mapQuickSubmit(ev){
     const o=mapQuickRead(true);
     // 今までの入力画面（edit.js）で作る作付と同じ形で保存する
     const f=db.fields.find(x=>x.id==pl.fieldId);
-    db.plantings.push({id:uid(),year:+o.plantDate.slice(0,4),fieldId:pl.fieldId,plotId:pl.id,variety:o.variety,purpose:"野菜・畑作",
+    const rec={year:+o.plantDate.slice(0,4),fieldId:pl.fieldId,plotId:pl.id,variety:o.variety,purpose:"野菜・畑作",
       seedSource:"",seedQty:"",plantDate:o.plantDate,harvestPlan:o.harvestPlan,harvestDate:"",yield:"",mulch:o.mulch,straw:o.straw,
-      baseFert:"",topdress:"",hill1:"",hill2:"",thinning:"",note:"",div:f?divOf(f):DIV()});
+      baseFert:"",topdress:"",hill1:"",hill2:"",thinning:"",note:"",div:f?divOf(f):DIV()};
+    // 今までの入力画面と同じ検証を通す（必須・数値の範囲・圃場と区画の組み合わせ）
+    const err=recordError(rec,ENT.plantings.cols.filter(c=>!c.calc));
+    if(err)throw new Error(err);
+    rec.id=uid();
+    db.plantings.push(rec);
     save();render();
     mapToast(`「${o.variety}」を ${pl.name} に植えました${o.plantDate>mapDate?"（植付予定）":""}`);
   }catch(e){

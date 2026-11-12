@@ -75,7 +75,7 @@ const ENT={
   {k:"asOf",l:"開始残高の日付",t:"date",def:()=>today()},{k:"note",l:"メモ"}]},
  assets:{title:"減価償却資産",cols:[
   {k:"name",l:"資産名（トラクター等）",req:1},{k:"acquireDate",l:"取得日（使い始めた日）",t:"date",req:1},
-  {k:"cost",l:"取得価額(円)",t:"number",req:1,min:1},{k:"life",l:"耐用年数(年)",t:"number",req:1,min:1,step:"1"},
+  {k:"cost",l:"取得価額(円)",t:"number",req:1,min:1},{k:"life",l:"耐用年数(年)",t:"number",req:1,min:1},
   {k:"ratio",l:"事業専用割合(%)",t:"number",min:0,max:100,def:()=>100},{k:"note",l:"メモ"}]},
 };
 /* ===== 田んぼ / 畑 / 全体 の切り替え =====
