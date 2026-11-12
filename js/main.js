@@ -5,5 +5,6 @@ window.addEventListener("beforeunload",e=>{
   if(localSave.error||(sync.fh&&db.dirty)){e.preventDefault();e.returnValue="";}
 });
 
+showAppVersion(); // 画面の下にバージョンを出す
 render();
 syncInit();

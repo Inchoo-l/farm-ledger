@@ -20,6 +20,9 @@ header label.yr{margin:0;color:#fff}
 #lastBk{font-size:13px}
 footer{text-align:center;padding:8px 16px 24px;font-size:13px}
 footer a{color:var(--sub)}
+/* バージョンの表示（プライバシーポリシーの左） */
+#appVer{color:var(--sub);margin-right:12px}
+#appVer:empty{display:none}
 a{color:var(--main)}
 header h1{font-size:18px;margin:0;flex:1}
 header select{font-size:15px;padding:3px}

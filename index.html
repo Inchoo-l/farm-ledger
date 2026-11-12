@@ -25,7 +25,7 @@
 </header>
 <nav id="nav"></nav>
 <main id="view"></main>
-<footer><a href="privacy.html" target="_blank" rel="noopener">プライバシーポリシー</a></footer>
+<footer><span id="appVer"></span><a href="privacy.html" target="_blank" rel="noopener">プライバシーポリシー</a></footer>
 <dialog id="dlg"><form method="dialog" id="frm"></form></dialog>
 <!-- 区画マップの「かんたん入力」（スマホでは画面の下から出る） -->
 <dialog id="qs" class="sheet"><form method="dialog" id="qsFrm"></form></dialog>
@@ -33,6 +33,7 @@
 <div id="toast" hidden></div>
 
 <!-- 読み込み順に意味があります（上のファイルの部品を、下のファイルが使います） -->
+<script src="js/version.js"></script>
 <script src="js/state.js"></script>
 <script src="js/history.js"></script>
 <script src="js/entities.js"></script>
