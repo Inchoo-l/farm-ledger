@@ -23,9 +23,26 @@ Farm ledger web app for rice fields and vegetable farms — runs in the browser,
 | `privacy.html` | プライバシーポリシー |
 | `js/version.js`, `更新履歴.md` | バージョン番号と、バージョンごとの変更内容 |
 | `backup-worker/` | 自動バックアップ（Cloudflare Workers）。手順書・復元手順書あり |
-| `デプロイ用フォルダを作る.ps1` | 公開用の `deploy/` フォルダを作る（`-Deploy` で公開まで） |
+| `wrangler.jsonc`, `tools/build-site.mjs` | 公開の設定と、公開用の `deploy/` フォルダを作るスクリプト |
+| `デプロイ用フォルダを作る.ps1` | パソコンから手動で公開するとき用（`-Deploy` で公開まで） |
 
 公開は Cloudflare Workers の静的アセットを使っています。
+
+## 公開（自動）
+
+Cloudflare の Workers Builds で GitHub とつなぐと、`main` に入れた内容が自動で公開されます。
+
+1. Cloudflare のダッシュボードで Worker `tanbo-ledger` を開き、「設定」→「ビルド」で、この GitHub リポジトリを接続する
+2. 次のように設定する
+
+| 項目 | 値 |
+|---|---|
+| 本番ブランチ | `main` |
+| ビルドコマンド | `node tools/build-site.mjs` |
+| デプロイコマンド | `npx wrangler deploy` |
+| ルートディレクトリ | `/` |
+
+公開されるのは `index.html`、`privacy.html`、`assets/`、`css/`、`js/` だけです（`tools/build-site.mjs` で決めています）。手順書・テスト・`backup-worker/` は公開されません。自動バックアップ（`backup-worker/`）は別の Worker なので、今までどおり手動で公開します。
 
 ## データの置き場所
 
@@ -57,11 +74,14 @@ npx serve .
 # 帳簿の集計・保存・同期の回帰テスト（Node.js、追加パッケージ不要）
 node --test test/ledger.test.mjs
 
+# 公開用フォルダを作るスクリプトのテスト
+node --test test/build-site.test.mjs
+
 # 任意：実ブラウザで入力・小数・必須欄・カレンダー・スマホ幅を確認（Edge使用）
 npm install --no-save --package-lock=false playwright
 node test/browser-check.mjs
 
-# 公開用フォルダの作成と公開
+# 公開用フォルダの作成と公開（手動で公開したいとき）
 .\デプロイ用フォルダを作る.ps1 -Deploy
 ```
 

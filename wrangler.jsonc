@@ -1,0 +1,9 @@
+{
+  // 帳簿アプリ本体（静的サイト）の公開設定。自動バックアップ（backup-worker/）とは別のもの
+  // 公開するファイルは、node tools/build-site.mjs が deploy フォルダに集める
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "tanbo-ledger",
+  "compatibility_date": "2026-11-04",
+  "observability": { "enabled": true },
+  "assets": { "directory": "./deploy" }
+}

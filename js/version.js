@@ -6,7 +6,7 @@
 //   中：新しい機能や画面の追加、操作のしかたが変わる変更
 //   小：不具合の修正、見た目や文言の小さな調整、中身の整理
 const APP_NAME="帳簿アプリ";
-const APP_VERSION="1.2.1";
+const APP_VERSION="1.2.2";
 // 画面に出す文字（例：帳簿アプリ Ver.1.2.1）。番号の形がおかしいときは、名前だけを返す
 function appVersionText(){
   if(!/^\d+\.\d+\.\d+$/.test(APP_VERSION)){
