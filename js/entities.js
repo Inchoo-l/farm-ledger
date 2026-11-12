@@ -23,15 +23,15 @@ const ENT={
  fields:{title:"田んぼ",cols:[
   {k:"name",l:"圃場名",req:1},{k:"area",l:"面積（a／町・反・畝のどれで入力してもOK）",t:"area",req:1},
   {k:"tenure",l:"区分",t:"select",o:["自作地","借地"]},{k:"rent",l:"年間小作料(円)",t:"number"},{k:"note",l:"メモ"}]},
- plantings:{title:"作付（品種・苗）",cols:[
-  {k:"year",l:"年産",t:"number",req:1,raw:1,def:()=>year}, // raw＝一覧でカンマを付けない（2,026 にしない）
+ plantings:{title:"作付",cols:[
+  {k:"year",l:"年産",t:"number",req:1,min:1,max:9999,raw:1,def:()=>year}, // raw＝一覧でカンマを付けない（2,026 にしない）
   {k:"fieldId",l:"圃場",t:"field",req:1},
   {k:"plotId",l:"区画（畑の中の区画マップで使います）",t:"plot"},
   {k:"variety",l:"品種・作物（例：コシヒカリ／ネギ）",req:1},
   {k:"purpose",l:"用途",t:"select",o:["野菜・畑作","主食用米","飼料用米","加工用米","酒造好適米","備蓄米","その他"]},
   {k:"seedSource",l:"苗の入手先（購入先 / 自家育苗）"},
   {k:"seedQty",l:"苗の数量（枚・箱）",t:"number"},
-  {k:"plantDate",l:"植付日（田植え・種まき・定植）",t:"date"},{k:"harvestPlan",l:"収穫予定日（目安・地図に「あと◯日」と出ます）",t:"date"},{k:"harvestDate",l:"収穫日（実際）",t:"date"},
+  {k:"plantDate",l:"植付日（田植え・種まき・定植）",t:"date"},{k:"harvestPlan",l:"収穫予定日（目安・地図に「あと◯日」と出ます）",t:"date"},{k:"harvestDate",l:"収穫日",t:"date"},
   {k:"yield",l:"収量(kg・玄米)",t:"number"},
   // 被覆資材（畑モードだけ表示。区画マップで、作物の帯に模様がかかります。両方・どちらもなしも選べます）
   {k:"mulch",l:"被覆資材：マルチをしている",t:"check",hat:1},
@@ -75,7 +75,7 @@ const ENT={
   {k:"asOf",l:"開始残高の日付",t:"date",def:()=>today()},{k:"note",l:"メモ"}]},
  assets:{title:"減価償却資産",cols:[
   {k:"name",l:"資産名（トラクター等）",req:1},{k:"acquireDate",l:"取得日（使い始めた日）",t:"date",req:1},
-  {k:"cost",l:"取得価額(円)",t:"number",req:1,min:1},{k:"life",l:"耐用年数(年)",t:"number",req:1,min:1,step:"1"},
+  {k:"cost",l:"取得価額(円)",t:"number",req:1,min:1},{k:"life",l:"耐用年数(年)",t:"number",req:1,min:1},
   {k:"ratio",l:"事業専用割合(%)",t:"number",min:0,max:100,def:()=>100},{k:"note",l:"メモ"}]},
 };
 /* ===== 田んぼ / 畑 / 全体 の切り替え =====

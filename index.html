@@ -14,17 +14,18 @@
   <h1>帳簿アプリ</h1>
   <label class="yr">年分
     <select id="year"></select></label>
-  <button class="g" onclick="backup()">💾 JSONで保存</button>
+  <button class="g" onclick="backup()">💾 バックアップを保存</button>
   <button class="g" id="undoBtn" onclick="undo()" aria-label="元に戻す">↩<span class="t"> 元に戻す</span></button>
   <button class="g" id="redoBtn" onclick="redo()" aria-label="やり直す">↪<span class="t"> やり直す</span></button>
   <button class="g" id="syncBtn" onclick="syncClick()">🔗 共有ファイル</button>
-  <span id="lastBk"></span>
+  <span id="lastBk" role="status" aria-live="polite"></span>
+  <div id="saveError" role="alert" hidden></div>
   <div id="modes"></div>
   <div id="status"></div>
 </header>
 <nav id="nav"></nav>
 <main id="view"></main>
-<footer><a href="privacy.html" target="_blank" rel="noopener">プライバシーポリシー</a></footer>
+<footer><span id="appVer"></span><a href="privacy.html" target="_blank" rel="noopener">プライバシーポリシー</a></footer>
 <dialog id="dlg"><form method="dialog" id="frm"></form></dialog>
 <!-- 区画マップの「かんたん入力」（スマホでは画面の下から出る） -->
 <dialog id="qs" class="sheet"><form method="dialog" id="qsFrm"></form></dialog>
@@ -32,6 +33,7 @@
 <div id="toast" hidden></div>
 
 <!-- 読み込み順に意味があります（上のファイルの部品を、下のファイルが使います） -->
+<script src="js/version.js"></script>
 <script src="js/state.js"></script>
 <script src="js/history.js"></script>
 <script src="js/entities.js"></script>

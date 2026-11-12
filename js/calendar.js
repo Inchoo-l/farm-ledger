@@ -23,8 +23,15 @@ function calRender(inp,box,ym){
       const b=ev.target.closest&&ev.target.closest("button");
       if(!b)return;
       ev.preventDefault();
-      if(b.dataset.d){inp.value=b.dataset.d;box.hidden=true;}          // 日を選んだ → 入力して閉じる
-      else if(b.dataset.t){inp.value=today();box.hidden=true;}         // 今日
+      if(b.dataset.d||b.dataset.t){
+        const value=b.dataset.d||today();
+        if(inp.value!==value){
+          inp.value=value;
+          inp.dispatchEvent(new Event("input",{bubbles:true}));
+          inp.dispatchEvent(new Event("change",{bubbles:true}));
+        }
+        box.hidden=true;
+      }
       else if(b.dataset.x){box.hidden=true;}                           // 閉じる
       else if(b.dataset.n){                                            // 前月・翌月
         let ny=y,nm=m+(+b.dataset.n);

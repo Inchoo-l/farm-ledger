@@ -23,8 +23,10 @@ function csv(name){
 // バックアップのファイル名に使う日付。西暦の下2桁＋月＋日（0なし）。例：2026年1月1日 → 26_1_1
 function backupStamp(){const d=new Date();return `${String(d.getFullYear()).slice(-2)}_${d.getMonth()+1}_${d.getDate()}`;}
 function backup(){
-  db.lastBackup=today();save(true);
-  dl(`agri-backup-${backupStamp()}.json`,JSON.stringify(db,null,1),"application/json");render();
+  const snapshot=JSON.parse(JSON.stringify(db));
+  snapshot.lastBackup=new Date().toISOString();snapshot.backupDirty=false;
+  dl(`agri-backup-${backupStamp()}.json`,JSON.stringify(snapshot,null,1),"application/json");
+  recordBackup(snapshot);render();
 }
 function restore(inp){
   const f=inp.files[0];if(!f)return;
@@ -39,7 +41,7 @@ function restore(inp){
         o=(await decryptWithPrompt(o,"暗号化バックアップを開く")).obj;
       }
       if(o&&o.format==="agri-ledger-incr"){alert("これは増分バックアップです。増分だけでは復元できません。\n「☁ 自動バックアップから復元（フル＋増分）」で、フォルダのファイルをすべて選んでください。");return;}
-      if(!o||!Array.isArray(o.expenses)||!Array.isArray(o.fields))throw 0;
+      if(!validData(o))throw new Error("帳簿データの形式が不正です");
       delete o._backup; // 自動バックアップのフルに付く管理用の項目は、データには入れない
       if(!confirm("現在のデータをすべて置き換えます。よろしいですか？"))return;
       const oldRev=db.rev||0;
@@ -72,6 +74,7 @@ async function restoreChainFiles(inp){
     }
     const {full,incrs}=BackupChain.buildChain(objs);
     const res=BackupChain.restoreChain(full,incrs);
+    if(!validData(res.state))throw new Error("復元する帳簿データの形式が不正です");
     const msg=`フルバックアップ（${full._backup.date}）＋増分${res.count}件 を当てはめて、${res.last.date} の状態に戻します。\n\n現在のデータはすべて置き換えます（元に戻す操作で、復元前に戻せます）。よろしいですか？`;
     if(!confirm(msg))return;
     const oldRev=db.rev||0;
@@ -89,7 +92,8 @@ function dataView(){
      <input type="file" accept=".json" multiple style="display:none" onchange="restoreChainFiles(this)"></label></div></div>
    <div class="card"><h2>バックアップと復元</h2>
    <p>データはこのブラウザの中に保存されています。<b>ブラウザの履歴削除やパソコンの故障で消える可能性があるため、定期的にバックアップを保存してください</b>（OneDriveやUSBメモリなど別の場所へ）。</p>
-   <p>最終バックアップ：${db.lastBackup||"未実施"}</p>
+    <p>最終バックアップ出力：${esc(backupTime())}${db.backupDirty?"（以降に変更あり）":""}</p>
+    <p class="hint">出力日時はダウンロードを開始した時刻です。ファイルが保存されたことも確認してください。</p>
    <div class="bar"><button class="b" onclick="backup()">バックアップを保存（JSON）</button>
    <button class="g" onclick="backupEnc()">🔒 暗号化してバックアップ</button>
    <label class="g" style="display:inline-block;margin:0;padding:5px 10px;border:1px solid var(--main);border-radius:6px;cursor:pointer;color:var(--main)">復元する
