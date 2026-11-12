@@ -4,7 +4,7 @@
    データを保存するたびに、直前の状態の写し（スナップショット）を残す。
    版数・バックアップ日などの管理用の値は、写しに含めない（変化とみなさない）。 */
 const hist={undo:[],redo:[],last:null,max:50};
-const snapOf=()=>JSON.stringify(db,(k,v)=>(k==="rev"||k==="dirty"||k==="lastBackup")?undefined:v);
+const snapOf=()=>JSON.stringify(db,(k,v)=>(k==="rev"||k==="dirty"||k==="backupDirty"||k==="lastBackup")?undefined:v);
 hist.last=snapOf();
 function pushHist(){
   const s=snapOf();

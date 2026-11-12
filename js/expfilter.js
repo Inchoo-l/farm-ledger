@@ -26,7 +26,7 @@ function expNormMap(src,dropComma){
   const from=[],to=[]; // そろえた文字ごとの、元の文字列での始まりと終わり
   for(let i=0;i<chars.length;i++){
     let u=chars[i];
-    if(i+1<chars.length&&(chars[i+1]==="ﾞ"||chars[i+1]==="ﾟ")){u+=chars[i+1];i++;} // 半角カナ＋濁点
+    if(i+1<chars.length&&/[ﾞﾟ\u3099\u309a]/u.test(chars[i+1])){u+=chars[i+1];i++;} // 半角カナ・結合文字の濁点
     const start=pos;pos+=u.length;
     if(dropComma&&(u===","||u==="，"))continue;
     const n=expNormUnit(u);
@@ -71,7 +71,7 @@ function expText(c,r,forSearch){ // forSearch=true のときは、検索用に�
   if(c.t=="planting"){const p=db.plantings.find(x=>x.id==v);return p?plantLabel(p):"共通";}
   if(c.t=="account"){const a=db.accounts.find(x=>x.id==v);return a?a.name:"";}
   if(c.t=="check")return v?(forSearch?"✔ インボイス 適格請求書":"✔"):"";
-  if(c.t=="number"&&v!==""&&v!=null)return yen(v);
+  if(c.t=="number"&&v!==""&&v!=null)return numberText(c,v);
   return v==null?"":String(v);
 }
 const expIsNum=c=>c.t=="number"; // 金額・数量・単価（カンマの有無どちらでも探す）

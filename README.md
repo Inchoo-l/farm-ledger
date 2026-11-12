@@ -21,10 +21,28 @@ Farm ledger web app for rice fields and vegetable farms — runs in the browser,
 |---|---|
 | `index.html`, `js/`, `css/`, `assets/` | アプリ本体 |
 | `privacy.html` | プライバシーポリシー |
+| `js/version.js`, `更新履歴.md` | バージョン番号と、バージョンごとの変更内容 |
 | `backup-worker/` | 自動バックアップ（Cloudflare Workers）。手順書・復元手順書あり |
-| `デプロイ用フォルダを作る.ps1` | 公開用の `deploy/` フォルダを作る（`-Deploy` で公開まで） |
+| `wrangler.jsonc`, `tools/build-site.mjs` | 公開の設定と、公開用の `deploy/` フォルダを作るスクリプト |
+| `デプロイ用フォルダを作る.ps1` | パソコンから手動で公開するとき用（`-Deploy` で公開まで） |
 
 公開は Cloudflare Workers の静的アセットを使っています。
+
+## 公開（自動）
+
+Cloudflare の Workers Builds で GitHub とつなぐと、`main` に入れた内容が自動で公開されます。
+
+1. Cloudflare のダッシュボードで Worker `tanbo-ledger` を開き、「設定」→「ビルド」で、この GitHub リポジトリを接続する
+2. 次のように設定する
+
+| 項目 | 値 |
+|---|---|
+| 本番ブランチ | `main` |
+| ビルドコマンド | `node tools/build-site.mjs` |
+| デプロイコマンド | `npx wrangler deploy` |
+| ルートディレクトリ | `/` |
+
+公開されるのは `index.html`、`privacy.html`、`assets/`、`css/`、`js/` だけです（`tools/build-site.mjs` で決めています）。手順書・テスト・`backup-worker/` は公開されません。自動バックアップ（`backup-worker/`）は別の Worker なので、今までどおり手動で公開します。
 
 ## データの置き場所
 
@@ -53,9 +71,31 @@ Farm ledger web app for rice fields and vegetable farms — runs in the browser,
 # 画面の確認：index.html をローカルサーバーで開く（file:// では Google ログインが使えません）
 npx serve .
 
-# 公開用フォルダの作成と公開
+# 帳簿の集計・保存・同期の回帰テスト（Node.js、追加パッケージ不要）
+node --test test/ledger.test.mjs
+
+# 公開用フォルダを作るスクリプトのテスト
+node --test test/build-site.test.mjs
+
+# 任意：実ブラウザで入力・小数・必須欄・カレンダー・スマホ幅を確認（Edge使用）
+npm install --no-save --package-lock=false playwright
+node test/browser-check.mjs
+
+# 公開用フォルダの作成と公開（手動で公開したいとき）
 .\デプロイ用フォルダを作る.ps1 -Deploy
 ```
+
+### 保存状態と同期の競合
+
+- ヘッダーでは「この端末への保存」「共有ファイルへの同期」「バックアップ出力」を別々に表示します。バックアップ出力日時はダウンロードを開始した日時です。保存したファイルも確認してください。
+- 新規データの青色申告特別控除は未設定です。「全体の集計」で選択します。既存データの設定は引き継ぎます。
+- 同期は版数だけでなく内容も比較します。競合時は自動同期を止め、「共有ファイルを採用」「この端末を採用」「保留する」から選びます。再接続時も、異なる内容を版数だけで自動採用しません。
+- 採用前の両方のデータは、この端末の localStorage に1組退避します。「全体」→「バックアップ」→「同期時に退避したデータ」から JSON を保存し、通常の復元操作で戻せます。退避できない場合は採用を中止します。
+- 共有ファイル全体を保存する方式のため、複数端末の同時書き込みを原子的に制御する仕組みはありません。引き続き、入力する端末は1台ずつにしてください。
+
+## バージョン
+
+`Ver.大.中.小` の形で、右の桁ほど小さい変更です（新しい機能は中、不具合の修正や小さな調整は小）。今のバージョンは画面のいちばん下に出ます。番号の付け方と変更内容は [更新履歴](更新履歴.md) を見てください。
 
 ## 注意
 

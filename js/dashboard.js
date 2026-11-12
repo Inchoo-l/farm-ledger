@@ -2,22 +2,12 @@
 // 集計画面（収支・原価計算）
 /* ========== 集計 ========== */
 function dash(){
-  const ex=db.expenses.filter(e=>inYear(e.date)&&inMode(e));
-  const sl=db.sales.filter(s=>inYear(s.date)&&inMode(s));
-  const byCat={};CATS.forEach(c=>byCat[c]=0);
-  ex.forEach(e=>byCat[e.category]=(byCat[e.category]||0)+expAmt(e));
+  const totals=ledgerTotals(inMode,mode=="all");
+  const {ex,sl,cat:byCat,assets:depRows,dep:depTotal,fam,expTotal:exTotal,incomeTotal:income,diff:before,shotoku:incomeAfter}=totals;
   // 小作料は圃場マスタの年額も参考表示（二重計上を避けるため経費合計には含めない）
-  const depRows=db.assets.filter(inMode).map(a=>({a,...depreciation(a,year)}));
-  const depTotal=depRows.reduce((s,r)=>s+r.biz,0);
   // 棚卸高・専従者給与は農場全体の数字なので「全体」タブでのみ反映する
-  const yv=yr();
-  const inv=mode=="all"?(+yv.invClose||0)-(+yv.invOpen||0):0;
-  const fam=mode=="all"?(+yv.fam||0):0;
-  const exTotal=ex.reduce((s,e)=>s+expAmt(e),0)+depTotal+fam;
-  const income=sl.reduce((s,r)=>s+(+r.amount||0),0)+inv;
+  const inv=totals.invClose-totals.invOpen;
   const ded=+db.settings.deduction||0;
-  const before=income-exTotal;
-  const incomeAfter=Math.max(0,before-Math.min(ded,Math.max(0,before)));
   const byKind=SALE_KINDS.map(k=>[k,sl.filter(s=>s.kind==k).reduce((s,r)=>s+(+r.amount||0),0)]);
 
   // 作付別原価
@@ -43,18 +33,21 @@ function dash(){
     ["3","作付を登録","いつ・何の品種を植えたか",pl.length>0,"plantings"],
     ["4","経費を入力","買った物・払ったお金",ex.length>0,"expenses"],
     ["5","売上を入力","売った・もらったお金",sl.length>0,"sales"]];
-  const stepsCard=mode=="all"?"":`<div class="card"><h2>はじめかた <span class="hint">（押すと入力画面へ進みます）</span></h2><div class="steps">
-    ${steps.map(([n,t,s,done,tb])=>`<div class="step ${done?"done":""}" onclick="tab='${tb}';render()"><b>${done?"✔":n}　${t}</b><small>${s}</small></div>`).join("")}</div></div>`;
+  const stepsCard=mode=="all"?"":`<details class="card" ${steps.every(s=>s[3])?"":"open"}><summary>はじめかた</summary>
+    ${!db.accounts.length?`<p>まず、手元の現金や銀行口座を1つ登録しましょう。</p>`:""}
+    <p class="hint">未登録の項目を押すと入力画面が開きます。</p><div class="steps">
+    ${steps.map(([n,t,s,done,tb])=>`<button type="button" class="step ${done?"done":""}" onclick="tab='${tb}';render();${done?"":`edit('${tb}')`}"><b>${done?"✔":n}　${t}</b><small>${s}</small></button>`).join("")}</div></details>`;
 
   return `
   ${stepsCard}
+  ${mode=="all"?"":`<div class="bar"><button class="b" onclick="edit('expenses')">＋ 経費を入力</button><button class="b" onclick="edit('sales')">＋ 売上を入力</button></div>`}
   ${mode=="all"?dashDivSection():""}
   <div class="card"><h2>${MODE_NAME[mode]} ${year}年分 収支の概算${mode=="all"?"（申告用の合計：田んぼ＋畑）":""}</h2>
     <div class="kpi">
       <div><small>💰 収入金額${q("収入金額")}<br>売った・もらったお金</small><b>${yen(income)} 円</b></div>
       <div><small>🧾 必要経費${q("必要経費")}<br>使ったお金</small><b>${yen(exTotal)} 円</b></div>
       <div><small>📈 差引金額${q("差引金額")}<br>収入－経費＝もうけ</small><b class="${before<0?"warn":""}">${yen(before)} 円</b></div>
-      ${mode=="all"?`<div><small>🎁 青色申告特別控除${q("青色申告特別控除")}<br>もうけから引いてもらえる額</small><b>${yen(Math.min(ded,Math.max(0,before)))} 円</b></div>
+      ${mode=="all"?`<div><small>🎁 青色申告特別控除${q("青色申告特別控除")}<br>もうけから引いてもらえる額</small><b>${yen(totals.ded)} 円</b></div>
       <div><small>🏛 農業所得${q("農業所得")}<br>税金の計算のもと（概算）</small><b>${yen(incomeAfter)} 円</b></div>
       <div><small>🏦 現在の貯金額${q("貯金額")}<br>${db.accounts.length}口座の合計</small><b>${yen(totalBal())} 円</b></div>`:""}
     </div>
@@ -64,8 +57,10 @@ function dash(){
       <p class="hint" style="margin:4px 0 0">${before>=0?"収入のほうが多いので、もうけが出ています。":"<span class='warn'>経費のほうが多く、赤字になっています。</span>"}</p>
     </div>
     ${mode=="all"?"":`<p class="hint">青色申告特別控除と農業所得は、田んぼと畑を合算する「📋 全体」タブで確認します。</p>`}
-    ${mode!="all"?"":`<p class="hint">控除額の設定：<select onchange="db.settings.deduction=+this.value;save();render()">
-      ${[[650000,"65万円（e-Tax＋複式簿記）"],[550000,"55万円"],[100000,"10万円（簡易簿記）"],[0,"なし"]].map(([v,l])=>`<option value="${v}" ${v==ded?"selected":""}>${l}</option>`).join("")}</select>
+    ${mode!="all"?"":`<p class="hint"><label for="deduction">控除額の設定</label><select id="deduction" onchange="db.settings.deduction=this.value===''?null:+this.value;save();render()">
+      <option value="" ${db.settings.deduction==null?"selected":""}>未設定（選んでください）</option>
+      ${[[100000,"10万円（簡易簿記・適用要件を確認）"],[550000,"55万円（別途、複式簿記の帳簿が必要）"],[650000,"65万円（別途、複式簿記・e-Tax等の要件を確認）"],[0,"なし"]].map(([v,l])=>`<option value="${v}" ${db.settings.deduction!=null&&v==ded?"selected":""}>${l}</option>`).join("")}</select>
+       ${db.settings.deduction==null?"控除額が未設定のため、現在は控除なしで概算しています。":""}
       　<label style="display:inline;margin:0"><input type="checkbox" ${db.settings.approved?"checked":""} onchange="db.settings.approved=this.checked;save();render()" style="width:auto"> 青色申告承認申請書を提出し承認済み</label>${q("青色申告承認申請書")}${q("複式簿記")}
       　※概算です。実際の申告は税務署・税理士・会計ソフトで確認してください。</p>`}
     ${warnNoLink?`<p class="warn">⚠ 作付に紐づいていない「種苗費」が${warnNoLink}件あります（品種別の原価に反映されません）。</p>`:""}
@@ -77,7 +72,7 @@ function dash(){
     <tr><th>合計</th><th class="n">${yen(income)}</th></tr></table></div>
     <p class="hint">家事消費（自家消費した米）や補助金・交付金も収入に含めて申告します。</p></div>
 
-  <div class="card"><h2>経費の内訳（何にいくら使ったか）${q("勘定科目")}</h2><div class="scroll"><table>
+  <div class="card"><h2>経費の内訳${q("勘定科目")}</h2><div class="scroll"><table>
     ${CATS.map(c=>`<tr><td>${c}${q(c)}</td><td class="n">${yen(byCat[c])}</td><td style="width:45%">${byCat[c]>0?`<span class="hb cost" style="width:${byCat[c]/catMax*100}%"></span>`:""}</td></tr>`).join("")}
     ${mode=="all"?`<tr><td>専従者給与${q("専従者給与")}</td><td class="n">${yen(fam)}</td><td></td></tr>`:""}
     <tr><td>減価償却費（事業分）${q("減価償却")}</td><td class="n">${yen(depTotal)}</td><td></td></tr>
@@ -111,7 +106,7 @@ function dashCalc(d){
   const ex=db.expenses.filter(e=>inYear(e.date)&&inD(e));
   const sl=db.sales.filter(s=>inYear(s.date)&&inD(s));
   const sum=(a,f)=>a.reduce((s,r)=>s+f(r),0);
-  const byCat={};CATS.forEach(c=>byCat[c]=0);
+  const byCat=Object.create(null);CATS.forEach(c=>byCat[c]=0);
   ex.forEach(e=>byCat[e.category]=(byCat[e.category]||0)+expAmt(e));
   const dep=sum(db.assets.filter(inD),a=>depreciation(a,year).biz);
   const exTotal=sum(ex,expAmt)+dep;
@@ -170,14 +165,14 @@ function dashDivSection(){
         <tr><td>全体だけの項目（棚卸高の増減／専従者給与）${q("棚卸高")}</td><td class="n">${yen(inv)}</td><td class="n">${yen(fam)}</td><td class="n">${yen(inv-fam)}</td></tr>
         <tr><th>合計（申告用）</th><th class="n">${yen(sumInc)}</th><th class="n">${yen(sumExp)}</th><th class="n">${yen(sumInc-sumExp)}</th></tr></table></div>
         <p class="hint ${ok?"":"warn"}">${ok?"✔ 下の「申告用の合計」と一致しています。":`⚠ 区分（田・畑）が付いていない記録などで、全記録の合計（収入 ${yen(allInc)} 円・経費 ${yen(allExp)} 円）と合いません。`}</p></div>
-      <h2 class="dsec">申告用の合計（従来どおり）</h2>`;
+      <h2 class="dsec">申告用の合計</h2>`;
   }catch(e){
     console.error(e);
     return `<div class="card"><p class="warn">田んぼと畑の別々の集計を作れませんでした：${esc(e.message||e)}</p></div>`;
   }
 }
 function varietySummary(prow){
-  const m={};
+  const m=Object.create(null);
   prow.forEach(r=>{const k=r.p.variety;m[k]=m[k]||{area:0,cost:0,y:0};m[k].area+=r.area;m[k].cost+=r.cost;m[k].y+=r.y;});
   const ks=Object.keys(m);if(!ks.length)return"";
   return `<h2 style="margin-top:14px">品種別まとめ</h2><div class="scroll"><table>
