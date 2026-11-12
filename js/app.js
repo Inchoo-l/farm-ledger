@@ -1,10 +1,11 @@
-// 画面全体の描画・タブ・青色申告の条件チェック "use strict";
+"use strict";
+// 画面全体の描画・タブ・青色申告の条件チェック
 /* ========== 描画 ========== */
 const tabsFor=()=>mode=="all"
   ?[["dash","📊 全体の集計（申告用）"],["accounts","🏦 貯金・口座"],["etax","🖥 e-Tax入力ガイド"],["glossary","📖 用語集"],["data","💾 バックアップ"]]
   :mode=="hat"
   ?[["map","🗺 区画マップ"],["plantings","🌱 作付"],["expenses","🧾 経費"],["sales","💰 売上・収入"],["accounts","🏦 貯金・口座"],["dash","📊 畑の集計"],["fields","🥬 畑の一覧"],["glossary","📖 用語集"]] // 畑にも経費・売上・口座（田んぼ・畑・全体で共通）・集計を出す。減価償却は田んぼ側だけ
-  :[["dash","📊 集計"],["expenses","🧾 経費"],["sales","💰 売上・収入"],["accounts","🏦 貯金・口座"],["plantings","🌱 作付・苗"],["fields",mode=="hat"?"🥬 畑の一覧":"🗾 田んぼの一覧"],["assets","🚜 減価償却（高い機械）"],["glossary","📖 用語集"]];
+  :[["dash","📊 集計"],["expenses","🧾 経費"],["sales","💰 売上・収入"],["accounts","🏦 貯金・口座"],["plantings","🌱 作付・苗"],["fields","🗾 田んぼの一覧"],["assets","🚜 減価償却（高い機械）"],["glossary","📖 用語集"]];
 let statusOpen=false;
 try{statusOpen=localStorage.getItem("agri-status-open")==="1";}catch(e){}
 function toggleStatus(){

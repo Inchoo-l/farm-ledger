@@ -1,4 +1,5 @@
-// 区画マップ（畑ごとの地図に区画を並べ、今の作付と日数を表示） "use strict";
+"use strict";
+// 区画マップ（畑ごとの地図に区画を並べ、今の作付と日数を表示）
 /* ========== 区画マップ ==========
    ・「畑の一覧」に登録した畑 ＝ 1枚のマップ（右上のダウンリストで切り替える）
    ・その畑の中を分けた「区画」(db.plots) を、地図に四角として置く（位置・大きさ・色は区画に保存）
@@ -7,6 +8,8 @@
    ・収穫予定日を3日過ぎた作付は、地図には出さない（収穫日を入れていない場合）
    ・藁・マルチ（被覆資材）は作物ごとに設定する。作物の帯の上に、紺の斜線（マルチ）・黄の斜線（藁）が半透明で重なり、
      角に「マ」「藁」の丸い印も出る。被覆資材のある帯は、同じ区画の中で前に出す
+   ・見た目は「畑」らしく：地図は地面の色、区画は土の色に畝（うね）の筋、作物の帯は畝に植わった株の点々の模様。
+     空いている区画には「＋ 植える」の印を出す。区画を押すと、かんたん入力（mapquick.js）が画面の下から出る
    ・スマホ幅（720px以下）では、地図全体を画面の幅に収める。方角の文字とコンパスは地図の外の余白に置き、文字は大きく・長い名前は「…」で省略する */
 const MAPW=1000,MAPH=640,MAPSNAP=10;
 const MAP_SEED=["#2e7d32","#1565c0","#8e24aa","#c2185b","#d84315","#00796b","#6d4c41","#546e7a"]; // 最初の8作物はこの色
@@ -15,6 +18,7 @@ const MAP_RIM=6;                       // 藁・マルチの枠の太さ
 const MAP_RIMS=[["straw","#dcb25c","藁"],["mulch","#1a2a6c","マルチ"]]; // 藁色・紺色
 const MAP_WORK=[["baseFert","元肥","元"],["topdress","追肥","追"],["hill1","土寄せ1回目","土1"],["hill2","土寄せ2回目","土2"],["thinning","間引き","間"]];
 let mapSel=null,mapEdit=false,mapDate=today(),mapDrag=null,mapCurId=null,mapSub="map";
+let mapSetOpen=false; // スマホ幅で「⚙ 設定」（畑の追加・畑の情報・地図の上の方角）を開いているか。PC幅ではいつも見えている
 
 const mapDays=(a,b)=>Math.round((Date.parse(b)-Date.parse(a))/864e5); // a から b までの日数
 const mapMD=d=>d?`${+d.slice(5,7)}/${+d.slice(8,10)}`:"";
@@ -51,7 +55,12 @@ function mapFitText(s,maxW,fs){
 /* ----- 被覆資材（マルチ・藁）の模様。作物の帯の上に半透明で重ねるので、作物の色と文字は読める -----
    マルチ＝紺の斜線（右下がり）／藁＝黄の斜線（右上がり）。どちらも細い白線を添えて、暗い背景でも見えるようにする */
 function mapDefs(){
-  return `<pattern id="patMulch" width="10" height="10" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="4.5" height="10" fill="#1a237e" fill-opacity=".6"/><rect x="4.5" width="1.2" height="10" fill="#fff" fill-opacity=".75"/></pattern>
+  // 畝（うね）の筋：区画の短い辺の向きに並べる（作物の帯が並ぶ向きと同じ）。patRidgeV＝縦の筋／patRidgeH＝横の筋
+  // 株の点々：作物の帯の上に薄く重ねて、植わっている様子を出す
+  return `<pattern id="patRidgeV" width="16" height="16" patternUnits="userSpaceOnUse"><rect width="5" height="16" fill="#000" fill-opacity=".18"/><rect x="5" width="1.5" height="16" fill="#fff" fill-opacity=".1"/></pattern>
+    <pattern id="patRidgeH" width="16" height="16" patternUnits="userSpaceOnUse"><rect width="16" height="5" fill="#000" fill-opacity=".18"/><rect y="5" width="16" height="1.5" fill="#fff" fill-opacity=".1"/></pattern>
+    <pattern id="patLeaf" width="14" height="14" patternUnits="userSpaceOnUse"><circle cx="4" cy="4" r="2.4" fill="#fff" fill-opacity=".2"/><circle cx="11" cy="11" r="2.4" fill="#fff" fill-opacity=".2"/></pattern>
+    <pattern id="patMulch" width="10" height="10" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="4.5" height="10" fill="#1a237e" fill-opacity=".6"/><rect x="4.5" width="1.2" height="10" fill="#fff" fill-opacity=".75"/></pattern>
     <pattern id="patStraw" width="10" height="10" patternUnits="userSpaceOnUse" patternTransform="rotate(-45)"><rect width="4.5" height="10" fill="#e0a800" fill-opacity=".7"/><rect x="4.5" width="1.2" height="10" fill="#fff" fill-opacity=".7"/></pattern>`;
 }
 const mapCvN=p=>{const c=coverOf(p);return (c.mulch?1:0)+(c.straw?1:0);};
@@ -99,7 +108,8 @@ function mapAssignColors(){
 const mapColor=crop=>(db.cropColors&&db.cropColors[crop])||"#546e7a";
 
 /* ----- その日(D)の区画の状態：育成中(grow) / 植付予定(plan) / 空き(empty) ----- */
-const mapActive=(p,D)=>p.plantDate?(p.plantDate<=D&&(!p.harvestDate||p.harvestDate>=D)):(String(p.year)==D.slice(0,4)&&!p.harvestDate);
+// 収穫日の当日からは「栽培中」に数えない（「収穫した」を押したら、その日のうちに区画が空きになり、次の作物を植えられる）
+const mapActive=(p,D)=>p.plantDate?(p.plantDate<=D&&(!p.harvestDate||p.harvestDate>D)):(String(p.year)==D.slice(0,4)&&!p.harvestDate);
 const mapHidden=(p,D)=>!p.harvestDate&&!!p.harvestPlan&&mapDays(p.harvestPlan,D)>MAP_GRACE; // 収穫予定日を3日超えた（収穫日の入力なし）
 function mapState(pl,D){
   const ps=db.plantings.filter(p=>p.plotId==pl.id);
@@ -209,8 +219,20 @@ function mapBandSvg(pl,list,i){
   if(fit>=1)tx=lines.slice(0,fit).map((t,j)=>`<text x="${6}" y="${16*K+j*lh}" class="bt ${j?"":"b"}" style="fill:${tc}">${esc(t)}</text>`).join("");
   else{const fs=Math.max(6,Math.min(13*K,bh-2));tx=`<text x="4" y="${bh/2+fs*0.36}" class="bt" style="font-size:${fs}px;fill:${tc}">${esc(lines[0])}</text>`;} // 細い帯は作物名だけ
   const h=mapBandHandle(bw,bh);
-  return `<svg data-pid="${p.id}" x="${b.x}" y="${b.y}" width="${bw}" height="${bh}"${mapEdit?` onpointerdown="event.stopPropagation();mapDownCrop(event,${pl.id},${p.id},'move')"`:""}><rect width="100%" height="100%" rx="4" fill="${col}"/>${mapCoverOverlay(p,4)}${tx}${mapCoverBadges(p,bw,bh,K)}${
+  return `<svg data-pid="${p.id}" x="${b.x}" y="${b.y}" width="${bw}" height="${bh}"${mapEdit?` onpointerdown="event.stopPropagation();mapDownCrop(event,${pl.id},${p.id},'move')"`:""}><rect width="100%" height="100%" rx="5" fill="${col}" stroke="rgba(0,0,0,.4)" stroke-width="2"/><rect class="cv" width="100%" height="100%" rx="5" fill="url(#patLeaf)"/>${mapCoverOverlay(p,5)}${tx}${mapCoverBadges(p,bw,bh,K)}${
     mapEdit?`<rect class="bh" x="${h.x}" y="${h.y}" width="${h.w}" height="${h.h}" onpointerdown="event.stopPropagation();mapDownCrop(event,${pl.id},${p.id},'size')"/>`:""}</svg>`;
+}
+
+// 空いている区画の真ん中に出す「＋ 植える」の印（区画が小さいときは「＋」だけ）。top＝区画名などの文字の下端
+function mapPlantMark(pl,top,K){
+  try{
+    const fs=14*K,ph=Math.min(30*K,pl.mh-top-6);
+    if(ph<fs*1.15)return ""; // 入らないほど小さい区画には出さない
+    const full=pl.mw>=fs*5.6+16,pw=full?fs*5.6:Math.min(pl.mw-12,ph*1.3);
+    if(pw<fs*1.2)return "";
+    const cx=pl.mw/2,cy=top+(pl.mh-top)/2;
+    return `<g class="pm"><rect x="${cx-pw/2}" y="${cy-ph/2}" width="${pw}" height="${ph}" rx="${ph/2}"/><text x="${cx}" y="${cy+fs*0.36}" text-anchor="middle" style="font-size:${fs}px">${full?"＋ 植える":"＋"}</text></g>`;
+  }catch(e){return "";}
 }
 
 /* ----- 画面 ----- */
@@ -224,9 +246,10 @@ function mapView(){
   const head=`<div class="bar"><h2 style="margin:0">🗺 区画マップ</h2>
       <span class="subtab"><button class="${mapSub=="map"?"on":""}" onclick="mapSub='map';render()">🗺 地図</button><button class="${mapSub=="time"?"on":""}" onclick="mapSub='time';mapTLScroll='today';render()">📅 履歴（時間軸）</button></span>
       <span class="mapsel"><select aria-label="畑（マップ）を選ぶ" onchange="mapCurId=+this.value;mapSel=null;mapTLPlot=0;render()">${hats.map(f=>`<option value="${f.id}" ${f.id==cur.id?"selected":""}>${esc(f.name)}</option>`).join("")}</select>
-        <button class="g" onclick="edit('fields')" title="畑の一覧に新しい畑を登録します">＋ 畑を追加</button>
-        <button class="g" onclick="edit('fields',${cur.id})">畑の情報を編集</button></span></div>`;
-  if(mapSub=="time")return `<div class="card">${head}${mapTimeline(cur)}</div>`;
+        <button class="g mapgear" onclick="mapSetOpen=!mapSetOpen;render()" aria-expanded="${mapSetOpen}" aria-label="畑の設定を${mapSetOpen?"閉じる":"開く"}">⚙ 設定</button>
+        <button class="g mapmore" onclick="edit('fields')" title="畑の一覧に新しい畑を登録します">＋ 畑を追加</button>
+        <button class="g mapmore" onclick="edit('fields',${cur.id})">畑の情報を編集</button></span></div>`;
+  if(mapSub=="time")return `<div class="card ${mapSetOpen?"mapopen":""}">${head}${mapTimeline(cur)}</div>`;
 
   const G=mapGeoLast=mapGeo(),K=G.k; // 画面の幅に合わせた見え方（PCは K=1 で今までどおり）
   const placed=plots.filter(p=>p.mx!=null),unplaced=plots.filter(p=>p.mx==null);
@@ -236,7 +259,9 @@ function mapView(){
   const shapes=drawOrder.map(pl=>{
     const st=mapState(pl,mapDate),cu=mapCustom(pl); // cu＝自分で決めた区画の色（栽培中は区画の地色、空き・予定は薄い地色）
     const col=cu||(st.list[0]?mapColor(mapCrop(st.list[0])):"");
-    const style=`--c:${col||"transparent"};--t:${cu&&st.k=="grow"?mapText(cu):"var(--ink)"}${cu?`;--cu:${cu}`:""}`;
+    // 区画は土の色（自分で色を決めた区画はその色）。文字は、土の上では白、選んだ色が明るければ黒
+    const style=`--c:${col||"transparent"};--t:${cu?mapText(cu):"#fff"}${cu?`;--cu:${cu}`:""}`;
+    const ridge=pl.mw>=pl.mh?"patRidgeV":"patRidgeH"; // 畝の筋の向き（作物の帯が並ぶ向きに合わせる）
     const hz=G.m?Math.max(18,Math.min(30/G.sc,pl.mw*0.5,pl.mh*0.5)):(mapCoarse()?32:16); // 大きさを変える取っ手（スマホは指で押せる大きさ）
     const nameMax=pl.mw-16; // 区画名・文字を入れられる幅
     const fit=t=>G.m?mapFitText(t,nameMax,15*K):t; // スマホ幅だけ、長い名前を「…」にする
@@ -245,10 +270,16 @@ function mapView(){
       // 被覆資材のある帯は、同じ区画の中で手前に出す（位置の計算は元の並びのまま、描く順番だけ変える）
       const order=st.list.map((p,i)=>i).sort((a,b)=>mapCvN(st.list[a])-mapCvN(st.list[b])||a-b);
       inner=`<text x="8" y="${18*K}" class="b">${esc(fit(pl.name))}</text>`+order.map(i=>mapBandSvg(pl,st.list,i)).join("");
-    }else inner=mapLines(pl,st,mapDate).map((t,i)=>`<text x="8" y="${(20+i*17)*(G.m?K*0.9:1)}" class="${i?"":"b"}">${esc(fit(t))}</text>`).join("");
-    return `<g class="fz ${st.k} ${cu&&st.k!="grow"?"tint":""} ${pl.id==mapSel?"sel":""}" style="${style}" transform="translate(${pl.mx},${pl.my})" onpointerdown="mapDown(event,${pl.id},'move')">
-      <clipPath id="cp${pl.id}"><rect width="${pl.mw}" height="${pl.mh}"/></clipPath>
-      <rect class="bg" width="${pl.mw}" height="${pl.mh}" rx="6"/>
+    }else{
+      const lines=mapLines(pl,st,mapDate).filter(t=>t!="空き"); // 「空き」は文字ではなく「＋ 植える」の印で示す
+      const step=17*(G.m?K*0.9:1);
+      inner=lines.map((t,i)=>`<text x="8" y="${(20+i*17)*(G.m?K*0.9:1)}" class="${i?"":"b"}">${esc(fit(t))}</text>`).join("")
+        +(st.k=="empty"&&!mapEdit?mapPlantMark(pl,6+lines.length*step,K):"");
+    }
+    return `<g class="fz ${st.k} ${cu?"tint":""} ${pl.id==mapSel?"sel":""}" style="${style}" transform="translate(${pl.mx},${pl.my})" ${mapEdit?`onpointerdown="mapDown(event,${pl.id},'move')"`:`onclick="mapTap(${pl.id})" tabindex="0" role="button" aria-label="${esc(pl.name)}（${st.k=="grow"?"栽培中":st.k=="plan"?"植付予定":"空き"}）を開く" onkeydown="if(event.key=='Enter'||event.key==' '){event.preventDefault();mapTap(${pl.id})}"`}>
+      <clipPath id="cp${pl.id}"><rect width="${pl.mw}" height="${pl.mh}" rx="8"/></clipPath>
+      <rect class="bg" width="${pl.mw}" height="${pl.mh}" rx="8"/>
+      <rect class="rg" width="${pl.mw}" height="${pl.mh}" rx="8" fill="url(#${ridge})"/>
       <g class="inner" clip-path="url(#cp${pl.id})">${inner}</g>
       ${mapEdit?`<rect class="hd" x="${pl.mw-hz/2}" y="${pl.mh-hz/2}" width="${hz}" height="${hz}" onpointerdown="event.stopPropagation();mapDown(event,${pl.id},'size')"/>`:""}
     </g>`;
@@ -256,25 +287,27 @@ function mapView(){
   // 凡例（いま地図に出ている作物）
   const crops=[...new Set(placed.flatMap(p=>mapState(p,mapDate).list).map(mapCrop))];
   const legend=crops.map(c=>`<span class="maplg"><i style="background:${mapColor(c)}"></i>${esc(c)}</span>`).join("")
-    +`<span class="maplg"><i style="border:2px dashed var(--sub);background:var(--card)"></i>空き</span>`
-    +`<span class="maplg"><i style="border:2px solid var(--sub);background:var(--main2)"></i>植付予定</span>`
+    +`<span class="maplg"><i class="lgsoil"></i>空き（土）</span>`
+    +`<span class="maplg"><i class="lgsoil plan"></i>植付予定</span>`
     +`<span class="maplg"><i class="cvsw mulch"></i>マルチ（紺の斜線）</span><span class="maplg"><i class="cvsw straw"></i>藁（黄の斜線）</span><span class="maplg"><i class="cvsw both"></i>マルチ＋藁</span>`;
   const empties=placed.filter(p=>mapState(p,mapDate).k=="empty").length;
   const loose=db.plantings.filter(p=>p.fieldId==cur.id&&!p.plotId); // 区画を決めていない作付
   const selPl=placed.find(p=>p.id==mapSel);
-  return `<div class="card">${head}
+  return `<div class="card ${mapSetOpen?"mapopen":""}">${head}
     <div class="bar">
       <span class="mapdate"><label style="margin:0">基準日 <input type="date" value="${esc(mapDate)}" onchange="mapDate=this.value||today();render()"></label>
       <button class="g" onclick="mapDate=today();render()">今日</button></span>
-      <span class="maptop"><label style="margin:0">地図の上＝<select onchange="mapSetTop(this.value)">${MAP_DIRS.map((n,i)=>`<option value="${i}" ${i==mapTop()?"selected":""}>${n}</option>`).join("")}</select></label>
+      <span class="maptop"><label class="mapmore" style="margin:0">地図の上＝<select onchange="mapSetTop(this.value)">${MAP_DIRS.map((n,i)=>`<option value="${i}" ${i==mapTop()?"selected":""}>${n}</option>`).join("")}</select></label>
       <button class="g" onclick="mapAddPlot()">＋ 区画を追加</button>
       <button class="${mapEdit?"b":"g"}" onclick="mapEdit=!mapEdit;render()">${mapEdit?"✔ 配置を終わる":"✏ 配置を編集"}</button></span></div>
-    <p class="hint">「${esc(cur.name)}」を区画に分けて並べます（例：A区・北側）。区画を押すと、下に詳しい情報が出ます。基準日を変えると、その日に何を植えていたか（前の年の作付など）が見られます。収穫予定日を${MAP_GRACE}日過ぎた作物は、収穫日を入れなくても地図から消えます。マルチ・藁は作物ごとに設定し、作物の帯に斜線の模様（マルチ＝紺、藁＝黄）が重なります。${mapEdit?"<b>区画をドラッグして移動、右下の黄色い四角をドラッグして大きさを変えられます。スマホでは、区画を選ぶと地図の下に「ボタンで調整」が出ます。</b>":"位置や大きさを変えるときは「配置を編集」を押してください。"}</p>
+    <p class="hint maplead">${mapEdit?"<b>配置の編集中：区画をドラッグして移動、右下の黄色い四角で大きさを変えられます。スマホでは、区画を選ぶと地図の下に「ボタンで調整」が出ます。終わったら「✔ 配置を終わる」を押してください。</b>":"<b>区画を押すと、作物を植える・収穫を記録する画面が出ます。</b>"}</p>
+    <details class="maphelp"><summary>使い方をくわしく見る</summary><p class="hint">「${esc(cur.name)}」を区画に分けて並べます（例：A区・北側）。基準日を変えると、その日に何を植えていたか（前の年の作付など）が見られます。収穫予定日を${MAP_GRACE}日過ぎた作物は、収穫日を入れなくても地図から消えます。マルチ・藁は作物ごとに設定し、作物の帯に斜線の模様（マルチ＝紺、藁＝黄）が重なります。区画の位置や大きさを変えるときは「配置を編集」を押してください。</p></details>
     ${!plots.length?`<p class="hint">「＋ 区画を追加」を押すと、名前を付けた区画がそのまま地図に置かれます（先に登録する必要はありません）。</p>`:""}
     ${unplaced.length?`<div class="bar"><span class="hint">地図に置いていない区画：</span>${unplaced.map(p=>`<button class="g" onclick="mapPlace(${p.id})">＋ ${esc(p.name)}</button>`).join("")}</div>`:""}
     <div class="scroll mapscroll"><svg id="mapSvg" class="mapsvg ${mapEdit?"edit":""}" viewBox="${G.vb.join(" ")}"${G.m?` style="--fs:${K.toFixed(2)}"`:""} role="img" aria-label="${esc(cur.name)}の区画マップ">
       <defs><pattern id="mapGrid" width="50" height="50" patternUnits="userSpaceOnUse"><path d="M50 0H0V50" class="grid"/></pattern>${mapDefs()}</defs>
       <rect width="${MAPW}" height="${MAPH}" fill="url(#mapGrid)" onpointerdown="mapSel=null;render()"/>
+      <rect class="aze" x="3" y="3" width="${MAPW-6}" height="${MAPH-6}" rx="12"/>
       ${shapes}
       ${mapCompass()}</svg></div>
     ${mapEdit&&selPl?mapAdjust(selPl):""}
@@ -293,7 +326,8 @@ function mapPanel(cur){
   const hid=ps.filter(p=>mapActive(p,mapDate)&&mapHidden(p,mapDate));
   const pre=`{fieldId:${cur.id},plotId:${pl.id},year:${+mapDate.slice(0,4)},plantDate:'${mapDate}'}`;
   return `<div class="card"><div class="bar"><h2 style="margin:0">${esc(cur.name)}　${esc(pl.name)}</h2>
-      <button class="b" onclick="edit('plantings',null,null,${pre})">＋ この区画に作付を追加</button>
+      <button class="b" onclick="mapQuickOpen(${pl.id})">🌱 作物を植える</button>
+      <button class="g" onclick="edit('plantings',null,null,${pre})">詳しく入力して追加</button>
       <button class="g" onclick="edit('plots',${pl.id})">区画の情報を編集</button>
       ${mapEdit&&pl.mx!=null?`<button class="g" onclick="mapUnplace(${pl.id})">地図から外す</button>`:""}
       ${ps.some(p=>p.sx!=null)?`<button class="g" onclick="mapResetBands(${pl.id})">作物の配置を自動に戻す</button>`:""}
@@ -302,7 +336,7 @@ function mapPanel(cur){
       ${mapCustom(pl)?`<button class="g" onclick="mapSetColor(${pl.id},'')">作物の色に戻す</button>`:`<span class="hint">色を選ぶと、この区画の地色（枠・見出し）がその色になります。作物の帯は作物ごとの色のままです。</span>`}</div>
     <p>${mapDate} の状態：<b>${st.k=="grow"?esc(st.list.map(p=>mapCrop(p)+(mapCvN(p)?"（"+coverText(p)+"）":"")).join("・"))+" を栽培中":st.k=="plan"?esc(st.list.map(p=>mapCrop(p)+"（"+mapMD(p.plantDate)+"）").join("・"))+" の植付予定":"空き"+(st.prev?"（前作："+esc(mapCrop(st.prev))+"）":"")}</b></p>
     ${hid.length?`<p class="hint">収穫予定日を${MAP_GRACE}日以上過ぎているため、地図に出していない作物：${esc(hid.map(mapCrop).join("・"))}（収穫日を入れるか、予定日を直すと整理されます）</p>`:""}
-    <p class="hint">1つの区画に複数の作物を入れるには、「＋ この区画に作付を追加」で、同じ区画に作物を続けて登録します。栽培中の作物が、区画の中に帯で並びます。「配置を編集」にすると、帯をドラッグして位置を、帯の右下の白い四角で大きさ（縦に細くもできます）を決められます。</p>
+    <p class="hint">1つの区画に複数の作物を入れるには、「🌱 作物を植える」で、同じ区画に作物を続けて登録します。栽培中の作物が、区画の中に帯で並びます。「配置を編集」にすると、帯をドラッグして位置を、帯の右下の白い四角で大きさ（縦に細くもできます）を決められます。</p>
     ${pl.note?`<p class="hint">メモ：${esc(pl.note)}</p>`:""}
     <div class="scroll"><table class="lt"><tr class="hd"><th>年産</th><th>作物</th><th>植付日</th><th>収穫予定日</th><th>収穫日</th><th>被覆資材</th><th>作業</th><th></th></tr>
     ${ps.map(p=>{const cv=coverOf(p);return `<tr><td data-label="年産">${esc(p.year)}</td><td data-label="作物">${esc(mapCrop(p))}</td>
@@ -434,7 +468,7 @@ document.addEventListener("pointermove",e=>{
   d.cur={x,y,w,h};
   // 動かしている間は図の見た目だけ更新する（離したときに保存する）
   d.g.setAttribute("transform",`translate(${x},${y})`);
-  d.g.querySelectorAll("rect.bg,clipPath rect").forEach(r=>{r.setAttribute("width",w);r.setAttribute("height",h);});
+  d.g.querySelectorAll("rect.bg,rect.rg,clipPath rect").forEach(r=>{r.setAttribute("width",w);r.setAttribute("height",h);});
   d.g.querySelectorAll("rect.rim").forEach(r=>{const i=+r.dataset.k*MAP_RIM+MAP_RIM/2;r.setAttribute("width",Math.max(2,w-2*i));r.setAttribute("height",Math.max(2,h-2*i));});
   if(d.how=="size"){const iw=d.g.querySelector(".inner");if(iw)iw.style.display="none";} // 大きさを変えている間は中の帯を隠す（離すと描き直す）
   const hd=d.g.querySelector("rect.hd");if(hd){const s=+hd.getAttribute("width");hd.setAttribute("x",w-s/2);hd.setAttribute("y",h-s/2);}
@@ -470,6 +504,13 @@ function mapUp(){
   }
   if(d.moved&&d.cur){Object.assign(pl,{mx:d.cur.x,my:d.cur.y,mw:d.cur.w,mh:d.cur.h});save();}
   mapSel=d.id;render();
+}
+// 区画を押したとき（配置の編集中でないとき）：その区画を選んで、かんたん入力（mapquick.js）を開く
+function mapTap(id){
+  try{
+    mapSel=id;render();
+    mapQuickOpen(id);
+  }catch(e){console.error(e);alert("区画の画面を開けませんでした："+(e.message||e));}
 }
 document.addEventListener("pointerup",mapUp);
 document.addEventListener("pointercancel",()=>{if(mapDrag){mapDrag=null;render();}});

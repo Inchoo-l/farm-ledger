@@ -1,4 +1,5 @@
-// 入力画面のカレンダー "use strict";
+"use strict";
+// 入力画面のカレンダー
 /* ===== 入力画面のカレンダー（日付欄を押すと下に開き、日を押すと入力されて閉じる） ===== */
 function calRender(inp,box,ym){
   try{

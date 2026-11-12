@@ -1,4 +1,5 @@
-// 元に戻す／やり直す（Ctrl+Z／Ctrl+Y）とメッセージ表示 "use strict";
+"use strict";
+// 元に戻す／やり直す（Ctrl+Z／Ctrl+Y）とメッセージ表示
 /* ========== 元に戻す／やり直す（Ctrl+Z／Ctrl+Y） ==========
    データを保存するたびに、直前の状態の写し（スナップショット）を残す。
    版数・バックアップ日などの管理用の値は、写しに含めない（変化とみなさない）。 */
@@ -16,8 +17,8 @@ function pushHist(){
 function resetHist(){hist.undo=[];hist.redo=[];hist.last=snapOf();}
 function applySnap(s){
   const o=JSON.parse(s), keep={rev:db.rev||0,seq:db.seq,lastBackup:db.lastBackup};
-  db=Object.assign(empty(),o);
-  db.seq=Math.max(keep.seq||1,o.seq||1); // 取り消しても、使った番号を再利用しない
+  db=fixDb(o);
+  db.seq=Math.max(keep.seq||1,db.seq||1); // 取り消しても、使った番号を再利用しない
   db.lastBackup=keep.lastBackup;db.rev=keep.rev;
   hist.last=s;
   save(false,false,true); // 履歴には積まず、共有ファイルへは書き込む

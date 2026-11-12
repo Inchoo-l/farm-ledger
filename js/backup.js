@@ -1,8 +1,11 @@
-// CSV出力・JSONバックアップ・復元 "use strict";
+"use strict";
+// CSV出力・JSONバックアップ・復元
 /* ========== CSV / バックアップ ========== */
 function dl(name,text,type){
   const a=document.createElement("a");
-  a.href=URL.createObjectURL(new Blob([text],{type}));a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+  const url=URL.createObjectURL(new Blob([text],{type}));
+  a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),10000); // すぐ消すと、ブラウザによっては保存が始まる前に無効になる
 }
 function csv(name){
   const E=ENT[name];
@@ -28,7 +31,9 @@ function backup(){
 function restore(inp){
   const f=inp.files[0];if(!f)return;
   const r=new FileReader();
+  r.onerror=()=>alert("このファイルは読み込めません");
   r.onload=async()=>{
+    inp.value=""; // 同じファイルをもう一度選べるように
     try{
       let o=JSON.parse(r.result);
       if(isEnv(o)){ // 暗号化バックアップ：パスワードで開く
@@ -40,7 +45,7 @@ function restore(inp){
       delete o._backup; // 自動バックアップのフルに付く管理用の項目は、データには入れない
       if(!confirm("現在のデータをすべて置き換えます。よろしいですか？"))return;
       const oldRev=db.rev||0;
-      db=Object.assign(empty(),o);
+      db=fixDb(o);
       db.rev=Math.max(oldRev,o.rev||0); // 共有ファイルより古い版数にならないようにする
       save(true);render();alert("復元しました");
     }catch(e){if(!e.cancel)alert("このファイルは読み込めません");}
@@ -73,7 +78,7 @@ async function restoreChainFiles(inp){
     const msg=`フルバックアップ（${full._backup.date}）＋増分${res.count}件 を当てはめて、${res.last.date} の状態に戻します。\n\n現在のデータはすべて置き換えます（元に戻す操作で、復元前に戻せます）。よろしいですか？`;
     if(!confirm(msg))return;
     const oldRev=db.rev||0;
-    db=Object.assign(empty(),res.state);
+    db=fixDb(res.state);
     db.rev=Math.max(oldRev,res.state.rev||0); // 共有ファイルより古い版数にならないようにする
     save(true);render();
     alert(`復元しました（${res.last.date} の状態）`);

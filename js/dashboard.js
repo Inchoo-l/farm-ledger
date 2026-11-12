@@ -1,4 +1,5 @@
-// 集計画面（収支・原価計算） "use strict";
+"use strict";
+// 集計画面（収支・原価計算）
 /* ========== 集計 ========== */
 function dash(){
   const totals=ledgerTotals(inMode,mode=="all");
@@ -11,14 +12,8 @@ function dash(){
 
   // 作付別原価
   const pl=db.plantings.filter(p=>p.year==year&&inMode(p));
-  // 田んぼ・畑の内訳（全体モードで表示）
-  const divRows=["田","畑"].map(d=>{
-    const i=db.sales.filter(s=>inYear(s.date)&&divOf(s)==d).reduce((s,r)=>s+(+r.amount||0),0);
-    const e=db.expenses.filter(x=>inYear(x.date)&&divOf(x)==d).reduce((s,r)=>s+expAmt(r),0)
-      +db.assets.filter(a=>divOf(a)==d).reduce((s,a)=>s+depreciation(a,year).biz,0);
-    return[d==="田"?"田んぼ":"畑",i,e];
-  });
-  const common=ex.filter(e=>!e.plantingId).reduce((s,e)=>s+expAmt(e),0)+depTotal;
+  // 田んぼ・畑ごとの内訳は、全体モードの上の「申告用の合計との照合」（dashDivSection）に出す（同じ表を2か所に出さない）
+  const common=ex.filter(noPlanting).reduce((s,e)=>s+expAmt(e),0)+depTotal;
   const totalArea=pl.reduce((s,p)=>s+(+(db.fields.find(f=>f.id==p.fieldId)||{}).area||0),0);
   const prow=pl.map(p=>{
     const f=db.fields.find(x=>x.id==p.fieldId)||{};
@@ -30,7 +25,7 @@ function dash(){
     const y=+p.yield||0;
     return{p,f,area,direct,share,cost,rev,y};
   });
-  const warnNoLink=ex.filter(e=>e.category=="種苗費"&&!e.plantingId).length;
+  const warnNoLink=ex.filter(e=>e.category=="種苗費"&&noPlanting(e)).length;
   const catMax=Math.max(1,...Object.values(byCat));
   const barMax=Math.max(income,exTotal,1);
   const steps=[["1","口座を登録","お金の出し入れをする口座",db.accounts.length>0,"accounts"],
@@ -61,9 +56,7 @@ function dash(){
       <div class="brow"><span class="l">経費</span><div class="trk"><i class="cost" style="width:${exTotal/barMax*100}%"></i></div><b>${yen(exTotal)} 円</b></div>
       <p class="hint" style="margin:4px 0 0">${before>=0?"収入のほうが多いので、もうけが出ています。":"<span class='warn'>経費のほうが多く、赤字になっています。</span>"}</p>
     </div>
-    ${mode=="all"?`<div class="scroll" style="margin-top:10px"><table><tr><th></th><th class="n">収入</th><th class="n">経費</th><th class="n">差引</th></tr>
-      ${divRows.map(([n,i,e])=>`<tr><td>${n}</td><td class="n">${yen(i)}</td><td class="n">${yen(e)}</td><td class="n">${yen(i-e)}</td></tr>`).join("")}</table></div>`
-      :`<p class="hint">青色申告特別控除と農業所得は、田んぼと畑を合算する「📋 全体」タブで確認します。</p>`}
+    ${mode=="all"?"":`<p class="hint">青色申告特別控除と農業所得は、田んぼと畑を合算する「📋 全体」タブで確認します。</p>`}
     ${mode!="all"?"":`<p class="hint"><label for="deduction">控除額の設定</label><select id="deduction" onchange="db.settings.deduction=this.value===''?null:+this.value;save();render()">
       <option value="" ${db.settings.deduction==null?"selected":""}>未設定（選んでください）</option>
       ${[[100000,"10万円（簡易簿記・適用要件を確認）"],[550000,"55万円（別途、複式簿記の帳簿が必要）"],[650000,"65万円（別途、複式簿記・e-Tax等の要件を確認）"],[0,"なし"]].map(([v,l])=>`<option value="${v}" ${db.settings.deduction!=null&&v==ded?"selected":""}>${l}</option>`).join("")}</select>
@@ -80,14 +73,14 @@ function dash(){
     <p class="hint">家事消費（自家消費した米）や補助金・交付金も収入に含めて申告します。</p></div>
 
   <div class="card"><h2>経費の内訳${q("勘定科目")}</h2><div class="scroll"><table>
-    ${CATS.map(c=>`<tr><td>${c}${q(c)}</td><td class="n">${yen(byCat[c])}</td><td style="width:45%"><span class="hb cost" style="width:${byCat[c]/catMax*100}%"></span></td></tr>`).join("")}
+    ${CATS.map(c=>`<tr><td>${c}${q(c)}</td><td class="n">${yen(byCat[c])}</td><td style="width:45%">${byCat[c]>0?`<span class="hb cost" style="width:${byCat[c]/catMax*100}%"></span>`:""}</td></tr>`).join("")}
     ${mode=="all"?`<tr><td>専従者給与${q("専従者給与")}</td><td class="n">${yen(fam)}</td><td></td></tr>`:""}
     <tr><td>減価償却費（事業分）${q("減価償却")}</td><td class="n">${yen(depTotal)}</td><td></td></tr>
     <tr><th>合計</th><th class="n">${yen(exTotal)}</th><th></th></tr></table></div></div>
 
   <div class="card"><h2>作付別 原価計算（${year}年産）${q("原価")}</h2><div class="scroll"><table>
     <tr><th>作付</th><th class="n">面積(a)</th><th class="n">直接費${q("直接費")}</th><th class="n">共通費配賦${q("按分")}</th><th class="n">原価計</th><th class="n">10aあたり原価</th><th class="n">収量(kg)</th><th class="n">反収(kg/10a)${q("反収")}</th><th class="n">60kgあたり原価${q("60kgあたり原価")}</th><th class="n">売上紐づけ</th></tr>
-    ${prow.map(r=>`<tr><td>${esc(plantLabel(r.p))}</td><td class="n">${r.area||"-"}</td><td class="n">${yen(r.direct)}</td><td class="n">${yen(r.share)}</td><td class="n"><b>${yen(r.cost)}</b></td>
+    ${prow.map(r=>`<tr><td>${esc(plantLabel(r.p))}</td><td class="n">${r.area?esc(r.area):"-"}</td><td class="n">${yen(r.direct)}</td><td class="n">${yen(r.share)}</td><td class="n"><b>${yen(r.cost)}</b></td>
       <td class="n">${r.area?yen(r.cost/r.area*10):"-"}</td><td class="n">${r.y?yen(r.y):"-"}</td><td class="n">${r.area&&r.y?yen(r.y/r.area*10):"-"}</td>
       <td class="n">${r.y?yen(r.cost/r.y*60):"-"}</td><td class="n">${yen(r.rev)}</td></tr>`).join("")||`<tr><td colspan="10" class="hint">この年産の作付が未登録です</td></tr>`}
     </table></div>
@@ -96,12 +89,12 @@ function dash(){
 
   <div class="card"><h2>苗・種苗の購入一覧（${year}年）</h2><div class="scroll"><table>
     <tr><th>日付</th><th>品種</th><th>摘要</th><th>取引先</th><th class="n">数量</th><th class="n">単価</th><th class="n">金額</th></tr>
-    ${ex.filter(e=>e.category=="種苗費").sort((a,b)=>a.date>b.date?1:-1).map(e=>`<tr><td>${hy(e.date)}</td><td>${hy(esc(e.variety))}</td><td>${hy(esc(e.desc))}</td><td>${hy(esc(e.vendor))}</td><td class="n">${hy(e.qty)}</td><td class="n">${e.unitPrice?yen(e.unitPrice):"-"}</td><td class="n">${yen(e.amount)}</td></tr>`).join("")||`<tr><td colspan="7" class="hint">なし</td></tr>`}
+    ${ex.filter(e=>e.category=="種苗費").sort((a,b)=>-byDateDesc(a,b)).map(e=>`<tr><td>${hy(esc(e.date))}</td><td>${hy(esc(e.variety))}</td><td>${hy(esc(e.desc))}</td><td>${hy(esc(e.vendor))}</td><td class="n">${hy(esc(e.qty))}</td><td class="n">${e.unitPrice?yen(e.unitPrice):"-"}</td><td class="n">${yen(e.amount)}</td></tr>`).join("")||`<tr><td colspan="7" class="hint">なし</td></tr>`}
     </table></div></div>
 
   ${mode=="hat"?"":`<div class="card"><h2>減価償却費（${year}年）${q("減価償却")}</h2><div class="scroll"><table>
     <tr><th>資産</th><th>取得日</th><th class="n">取得価額</th><th class="n">耐用年数</th><th class="n">本年償却費</th><th class="n">事業分</th><th class="n">期末残高</th></tr>
-    ${depRows.map(r=>`<tr><td>${esc(r.a.name)}</td><td>${hy(r.a.acquireDate)}</td><td class="n">${yen(r.a.cost)}</td><td class="n">${r.a.life}</td><td class="n">${yen(r.dep)}</td><td class="n">${yen(r.biz)}</td><td class="n">${yen(r.rest)}</td></tr>`).join("")||`<tr><td colspan="7" class="hint">なし</td></tr>`}
+    ${depRows.map(r=>`<tr><td>${esc(r.a.name)}</td><td>${hy(esc(r.a.acquireDate))}</td><td class="n">${yen(r.a.cost)}</td><td class="n">${esc(r.a.life)}</td><td class="n">${yen(r.dep)}</td><td class="n">${yen(r.biz)}</td><td class="n">${yen(r.rest)}</td></tr>`).join("")||`<tr><td colspan="7" class="hint">なし</td></tr>`}
     </table></div></div>`}`;
 }
 
@@ -123,7 +116,7 @@ function dashCalc(d){
   const otherCat=sum(ex,expAmt)-sum(CATS,c=>byCat[c]); // 科目が一覧にない経費（あれば別行で出す）
   // 作付別の原価：dash() と同じ考え方（共通費＝紐づけなし経費＋減価償却費を、面積比で按分）
   const pl=db.plantings.filter(p=>p.year==year&&inD(p));
-  const common=sum(ex.filter(e=>!e.plantingId),expAmt)+dep;
+  const common=sum(ex.filter(noPlanting),expAmt)+dep;
   const areaOf=p=>+(db.fields.find(f=>f.id==p.fieldId)||{}).area||0;
   const totalArea=sum(pl,areaOf);
   const prow=pl.map(p=>{
@@ -184,5 +177,5 @@ function varietySummary(prow){
   const ks=Object.keys(m);if(!ks.length)return"";
   return `<h2 style="margin-top:14px">品種別まとめ</h2><div class="scroll"><table>
    <tr><th>品種</th><th class="n">面積(a)</th><th class="n">原価計</th><th class="n">10aあたり</th><th class="n">収量(kg)</th><th class="n">60kgあたり</th></tr>
-   ${ks.map(k=>{const v=m[k];return `<tr><td>${esc(k)}</td><td class="n">${v.area||"-"}</td><td class="n">${yen(v.cost)}</td><td class="n">${v.area?yen(v.cost/v.area*10):"-"}</td><td class="n">${v.y?yen(v.y):"-"}</td><td class="n">${v.y?yen(v.cost/v.y*60):"-"}</td></tr>`}).join("")}</table></div>`;
+   ${ks.map(k=>{const v=m[k];return `<tr><td>${esc(k)}</td><td class="n">${v.area?esc(v.area):"-"}</td><td class="n">${yen(v.cost)}</td><td class="n">${v.area?yen(v.cost/v.area*10):"-"}</td><td class="n">${v.y?yen(v.y):"-"}</td><td class="n">${v.y?yen(v.cost/v.y*60):"-"}</td></tr>`}).join("")}</table></div>`;
 }

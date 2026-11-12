@@ -1,12 +1,24 @@
-// データの保存・読み込み（localStorage） "use strict";
+"use strict";
+// データの保存・読み込み（localStorage）
 /* ========== データ ========== */
 const KEY="agri-ledger-v1";
 const localSave={at:null,error:""};
+const DB_LISTS=["fields","plantings","expenses","sales","assets","accounts","plots"]; // id を持つ記録の一覧
 let db=load();
 if(db.backupDirty===undefined)db.backupDirty=!!db.dirty;
 function load(){
-  try{const s=localStorage.getItem(KEY);if(s)return Object.assign(empty(),JSON.parse(s));}catch(e){}
+  try{const s=localStorage.getItem(KEY);if(s)return fixDb(JSON.parse(s));}catch(e){console.error(e);}
   return empty();
+}
+// 読み込んだデータ（ブラウザの保存分・バックアップ・共有ファイル）を、アプリが扱える形に整える。
+// 一覧が配列でない・設定が無いなど、壊れた部分は空の値に直す（画面全体が動かなくなるのを防ぐ）。
+// 帳簿の中身そのものは変えない（次に使う番号の重複は uid() が防ぐ）
+function fixDb(o){
+  const d=Object.assign(empty(),o&&typeof o=="object"?o:{});
+  DB_LISTS.forEach(k=>{d[k]=Array.isArray(d[k])?d[k].filter(r=>r&&typeof r=="object"):[];});
+  if(!d.settings||typeof d.settings!="object")d.settings=empty().settings;
+  if(!d.cropColors||typeof d.cropColors!="object")d.cropColors={};
+  return d;
 }
 function empty(){return{fields:[],plantings:[],expenses:[],sales:[],assets:[],accounts:[],settings:{deduction:null},plots:[],cropColors:{},yearly:{},lastBackup:null,seq:1};}
 function persistLocal(){

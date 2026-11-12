@@ -5,12 +5,22 @@
 /* モードごとに全体の色を切り替える（田んぼ=緑 / 畑=茶 / 全体=青） */
 body.hat{--main:var(--hat);--main2:var(--hat2)}
 body.all{--main:var(--allc);--main2:var(--all2)}
+/* --fill＝白い文字をのせる「塗り」の色（ヘッダー・塗りボタンなど）。
+   明るい画面では --main と同じ。暗い画面（ダークモード）では --main が明るい色になり白い文字が読みにくいので、濃い色にする */
+body{--fill:var(--main)}
+@media(prefers-color-scheme:dark){body{--fill:#2e7d32}body.hat{--fill:#9a5f12}body.all{--fill:#3d5a80}}
 #modes{flex-basis:100%;display:flex;gap:8px}
 #modes button{flex:1;max-width:220px;padding:10px 0;font-size:18px;font-weight:bold;border:2px solid #fff;border-radius:10px 10px 0 0;background:#fff3;color:#fff;cursor:pointer}
-#modes button.on{background:#fff;color:var(--main)}
+#modes button.on{background:#fff;color:var(--fill)}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.5 "Yu Gothic UI","Hiragino Sans","Hiragino Kaku Gothic ProN","Meiryo",sans-serif;-webkit-text-size-adjust:100%}
-header{background:var(--main);color:#fff;padding:10px 16px;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+header{background:var(--fill);color:#fff;padding:10px 16px;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+header button.g{color:#fff;border-color:#fff}
+header label.yr{margin:0;color:#fff}
+#lastBk{font-size:13px}
+footer{text-align:center;padding:8px 16px 24px;font-size:13px}
+footer a{color:var(--sub)}
+a{color:var(--main)}
 header h1{font-size:18px;margin:0;flex:1}
 header select{font-size:15px;padding:3px}
 nav{display:flex;gap:2px;flex-wrap:wrap;padding:8px 12px 0;border-bottom:1px solid var(--line)}
@@ -24,7 +34,7 @@ th,td{padding:6px 8px;border-bottom:1px solid var(--line);text-align:left;white-
 th{background:var(--main2);font-weight:600}
 td.n,th.n{text-align:right}
 .scroll{overflow-x:auto}
-button.b{background:var(--main);color:#fff;border:0;border-radius:6px;padding:7px 14px;cursor:pointer;font-size:14px}
+button.b{background:var(--fill);color:#fff;border:0;border-radius:6px;padding:7px 14px;cursor:pointer;font-size:14px}
 button.g{background:none;color:var(--main);border:1px solid var(--main);border-radius:6px;padding:5px 10px;cursor:pointer;font-size:13px}
 button.d{color:var(--warn);border-color:var(--warn)}
 .bar{display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap;align-items:center}
@@ -35,7 +45,7 @@ dialog{border:1px solid var(--line);border-radius:10px;background:var(--card);co
 dialog::backdrop{background:#0006}
 /* 入力画面：中身だけスクロールし、キャンセル／確定ボタンは常に下に表示する */
 dialog[open]{display:flex;flex-direction:column;max-height:92vh;max-height:92dvh}
-#frm{display:flex;flex-direction:column;min-height:0;flex:1;margin:0}
+#frm,#qsFrm{display:flex;flex-direction:column;min-height:0;flex:1;margin:0}
 #frm h2{flex:none}
 .fbody{flex:1;min-height:0;overflow-y:auto;padding:0 4px 8px 0}
 .fbar{flex:none;display:flex;flex-direction:row-reverse;gap:10px;border-top:1px solid var(--line);padding-top:12px;margin-top:6px}
@@ -51,7 +61,7 @@ dialog[open]{display:flex;flex-direction:column;max-height:92vh;max-height:92dvh
 .cal .cg button.td{border-color:var(--main)}
 .cal .cg button.sun{color:var(--warn)}
 .cal .cg button.sat{color:#5b8fd6}
-.cal .cg button.sel{background:var(--main);color:#fff}
+.cal .cg button.sel{background:var(--fill);color:#fff}
 label{display:block;margin:8px 0 2px;font-size:13px;color:var(--sub)}
 input,select,textarea{width:100%;padding:7px;font-size:15px;border:1px solid var(--line);border-radius:6px;background:var(--bg);color:var(--ink)}
 input[type=checkbox]{width:auto}
@@ -65,7 +75,7 @@ input[type=checkbox]{width:auto}
 #status .sthead{display:flex;justify-content:space-between;gap:12px;cursor:pointer;user-select:none;font-weight:bold}
 #status .sthead span:last-child{font-weight:normal;font-size:13px;white-space:nowrap;opacity:.9}
 /* 用語ヘルプ（? マーク）とふきだし */
-.q{display:inline-block;width:18px;height:18px;line-height:18px;border-radius:50%;background:var(--main);color:#fff;font-size:12px;text-align:center;cursor:pointer;margin-left:4px;font-weight:bold;vertical-align:middle;font-style:normal}
+.q{display:inline-block;width:18px;height:18px;line-height:18px;border-radius:50%;background:var(--fill);color:#fff;font-size:12px;text-align:center;cursor:pointer;margin-left:4px;font-weight:bold;vertical-align:middle;font-style:normal}
 #tip{position:fixed;margin:0;inset:auto;max-width:min(340px,92vw);background:var(--card);color:var(--ink);border:2px solid var(--main);border-radius:10px;padding:10px 12px;font-size:14px;box-shadow:0 4px 14px #0005;white-space:normal;line-height:1.6}
 #tip b{color:var(--main)}
 #tip .ex{display:block;margin-top:6px;background:var(--main2);border-radius:6px;padding:6px 8px;font-size:13px}
@@ -89,6 +99,19 @@ header button:disabled{opacity:.4;cursor:default}
 #toast[hidden]{display:none}
 .rq{color:#e53935;font-weight:bold;margin-left:3px}
 .fld[hidden]{display:none}
+/* 面積の入力（a ＝ 町・反・畝）：数字の欄と単位を1組にして、折り返しても単位が離れない */
+.area{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px}
+.area .au{display:inline-flex;align-items:center;gap:4px;white-space:nowrap}
+.area .au input{width:76px}
+.area .au:first-child input{width:104px}
+.area .eq{color:var(--sub)}
+/* e-Tax入力ガイドの表：項目名は折り返し、金額と「コピー」ボタンは折り返さない（狭い画面でもボタンが見える） */
+.et td:first-child,.et th:first-child{white-space:normal;min-width:9em}
+/* 一覧の右端の「複製・編集・削除」は、表を横にスクロールしても見えるように固定する（パソコン幅） */
+@media(min-width:721px){
+  .lt td.act,.lt tr.hd th:last-child{position:sticky;right:0}
+  .lt td.act{background:var(--card);box-shadow:-6px 0 6px -6px #0004}
+}
 .hint{color:var(--sub);font-size:13px}
 .warn{color:var(--warn)}
 
@@ -96,7 +119,13 @@ header button:disabled{opacity:.4;cursor:default}
 @media(max-width:720px){
   body{font-size:16px}
   header{padding:8px 10px;gap:8px}
-  header h1{font-size:15px;flex-basis:100%}
+  /* 1行目：アプリ名と年分／2行目：ボタン（元に戻す・やり直すは記号だけ）にまとめて、ヘッダーの高さをおさえる */
+  header h1{font-size:15px;flex:1 1 calc(100% - 140px);min-width:0}
+  header label.yr{display:flex;align-items:center;gap:6px;font-size:13px;white-space:nowrap;flex:none}
+  header button.g{min-height:36px;padding:4px 9px}
+  header button .t{display:none}
+  #undoBtn,#redoBtn{min-width:40px;font-size:16px}
+  #syncBtn{flex:1 1 0;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px}
   #lastBk{flex-basis:100%;font-size:12px}
   #modes{gap:4px}
   #modes button{max-width:none;font-size:15px;padding:9px 0;border-radius:8px 8px 0 0}
@@ -133,19 +162,28 @@ header button:disabled{opacity:.4;cursor:default}
 }
 
 /* 区画マップ */
-.mapsvg{width:100%;min-width:720px;height:auto;display:block;background:var(--card);border:1px solid var(--line);border-radius:8px}
-.mapsvg .grid{fill:none;stroke:var(--line);stroke-width:1}
+/* 畑らしい色：--ground＝地面／--soil＝区画の土／--soil2＝土の縁／--aze＝畑の外周（あぜ）の草 */
+.mapsvg{--ground:#efe6d3;--soil:#8a6748;--soil2:#5b412b;--aze:#8bb04a;--gridc:rgba(110,80,40,.16)}
+@media(prefers-color-scheme:dark){.mapsvg{--ground:#29241c;--soil:#6f5239;--soil2:#33251a;--aze:#5f7d33;--gridc:rgba(255,235,200,.07)}}
+.mapsvg{width:100%;min-width:720px;height:auto;display:block;background:var(--ground);border:1px solid var(--line);border-radius:12px}
+.mapsvg .grid{fill:none;stroke:var(--gridc);stroke-width:1}
+.mapsvg .aze{fill:none;stroke:var(--aze);stroke-width:6;stroke-opacity:.75;pointer-events:none}
 .mapsvg .fz{cursor:pointer}
 .mapsvg.edit .fz{cursor:move;touch-action:none}
-.mapsvg .fz .bg{fill:var(--card);stroke:var(--sub);stroke-width:2;stroke-dasharray:6 4}
-.mapsvg .fz.grow .bg{fill:var(--cu,var(--card));stroke:rgba(0,0,0,.35);stroke-dasharray:none}
-.mapsvg .fz.plan .bg{fill:var(--main2);stroke:var(--c);stroke-width:3;stroke-dasharray:none}
-.mapsvg .fz text{font-size:calc(14px*var(--fs,1));fill:var(--ink);pointer-events:none}
+/* 区画＝土の色に畝の筋（.rg）。自分で色を決めた区画（.tint）はその色。植付予定は、作物の色の点線で囲む */
+.mapsvg .fz .bg{fill:var(--soil);stroke:var(--soil2);stroke-width:2.5}
+.mapsvg .fz.tint .bg{fill:var(--cu)}
+.mapsvg .fz.plan .bg{stroke:var(--c);stroke-width:4;stroke-dasharray:10 6}
+.mapsvg .fz .rg{pointer-events:none}
+.mapsvg .fz text{font-size:calc(14px*var(--fs,1));fill:var(--t,#fff);pointer-events:none}
+/* 空いている区画の「＋ 植える」の印 */
+.mapsvg .pm{pointer-events:none}
+.mapsvg .pm rect{fill:#fff;fill-opacity:.92;stroke:var(--soil2);stroke-width:1.5}
+.mapsvg .pm text{fill:#2e7d32;font-weight:700}
+.mapsvg .fz:not(.grow):hover .pm rect{fill-opacity:1}
 .mapsvg .fz text.b{font-size:calc(15px*var(--fs,1));font-weight:700}
-.mapsvg .fz.grow text{fill:var(--t,var(--ink))}
 .mapsvg .fz.grow text.bt{fill:#fff;font-size:calc(13px*var(--fs,1))}
 .mapsvg .fz.grow text.bt.b{font-size:calc(14px*var(--fs,1))}
-.mapsvg .fz.tint .bg{fill:var(--c);fill-opacity:.3;stroke:var(--c)}
 .mapsvg .dir text{font-size:15px;font-weight:700;fill:var(--sub);pointer-events:none}
 .mapsvg .dir .nl{fill:#d32f2f}
 .mapsvg .rose{fill:var(--card);stroke:var(--sub);stroke-width:1.5;fill-opacity:.85}
@@ -163,7 +201,7 @@ header button:disabled{opacity:.4;cursor:default}
 /* ===== 区画マップの追加分：サブタブ・藁/マルチ・時間軸・スマホ調整・Safari対応 ===== */
 .subtab{display:inline-flex;gap:4px}
 .subtab button{border:1px solid var(--main);background:none;color:var(--main);padding:6px 12px;border-radius:16px;cursor:pointer;font-size:14px;touch-action:manipulation}
-.subtab button.on{background:var(--main);color:#fff;font-weight:bold}
+.subtab button.on{background:var(--fill);color:#fff;font-weight:bold}
 .chk{display:inline-flex;align-items:center;gap:6px;margin:0;color:var(--ink);font-size:15px;cursor:pointer}
 .chk input{width:22px;height:22px;margin:0}
 .sw{display:inline-block;width:14px;height:14px;border-radius:3px;vertical-align:middle}
@@ -241,7 +279,9 @@ mark{background:#ffe08a;color:#222;border-radius:2px;padding:0 1px}
 .lt td .hit{white-space:normal;font-size:12px;color:var(--sub);margin-top:2px;max-width:340px}
 /* 全体モード：田んぼと畑を並べて別々に集計 */
 .dsec{font-size:17px;margin:18px 0 8px;padding-left:8px;border-left:5px solid var(--main)}
-.dgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:start}
+.dgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px;align-items:start;margin-bottom:16px}
+/* 説明文の中の選択欄（控除額・面積の換算）は、画面いっぱいに広げない */
+.hint select{width:auto;max-width:100%}
 .dgrid .card{margin-bottom:0;min-width:0}
 .dcol h2{font-size:17px}
 .dh{font-size:14px;margin:14px 0 4px;color:var(--sub)}
@@ -265,12 +305,65 @@ mark{background:#ffe08a;color:#222;border-radius:2px;padding:0 1px}
   .maptop label select{flex:1;min-width:0}
   .maptop button{width:100%}
   /* 畑の選択と、畑を追加・畑の情報を編集のボタン */
-  .mapsel{margin-left:0;flex:1 1 100%;display:grid;grid-template-columns:1fr 1fr;gap:8px;min-width:0}
-  .mapsel select{grid-column:1/-1;min-width:0;width:100%}
-  .mapsel button{width:100%}
+  /* スマホでは、畑の選択の横に「⚙ 設定」。畑を追加・畑の情報を編集・地図の上の方角（.mapmore）は、設定を開いたときだけ出す（地図をすぐ見られるように） */
+  .mapsel{margin-left:0;flex:1 1 100%;display:flex;flex-wrap:wrap;gap:8px;min-width:0}
+  .mapsel select{flex:1 1 0;min-width:0;width:auto}
+  .mapsel .mapgear{display:inline-block;flex:none}
+  .mapmore{display:none!important}
+  .mapopen .mapsel .mapmore{display:inline-block!important;flex:1 1 calc(50% - 4px)}
+  .mapopen .maptop label.mapmore{display:flex!important}
   .subtab{flex-wrap:wrap}
   /* 経費の検索：入力欄を全幅に */
   .expsearch .sbox input{flex-basis:100%}
   .expf{grid-template-columns:1fr 1fr}
   .lt td .hit{max-width:none;text-align:right}
 }
+/* ===== 区画マップ：凡例・使い方・かんたん入力（mapquick.js） ===== */
+.maplg i.lgsoil{background:#8a6748;border:2px solid #5b412b}
+.maplg i.lgsoil.plan{border:2px dashed var(--main)}
+.maplead{margin:8px 0 4px}
+.maphelp{margin:0 0 8px}
+.maphelp summary{cursor:pointer;color:var(--main);font-size:13px;padding:4px 0;touch-action:manipulation}
+.mapgear{display:none} /* 「⚙ 設定」はスマホ幅だけ。PC幅では設定がいつも見えている */
+.fbar[hidden]{display:none}
+.qsmore{margin-top:12px;border-top:1px dashed var(--line);padding-top:6px}
+.qsmore summary{cursor:pointer;font-weight:700;font-size:15px;padding:8px 0;color:var(--main);touch-action:manipulation}
+/* かんたん入力の画面：PCは中央、スマホは画面の下から出る */
+dialog.sheet{width:min(540px,94vw);padding:14px 16px}
+.qsh{display:flex;align-items:flex-start;gap:10px;margin-bottom:8px}
+.qst{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.qst b{font-size:17px;overflow-wrap:anywhere}
+.qst span{font-size:13px;color:var(--sub)}
+.qsx{flex:none;min-width:40px;min-height:40px;font-size:16px}
+.qsbody label{margin-top:10px}
+.qsh3{font-size:15px;margin:14px 0 0;padding-top:12px;border-top:1px dashed var(--line)}
+.qsbody>.qsh3:first-child{border-top:0;padding-top:0;margin-top:0}
+/* 栽培中・予定の作物の行 */
+.qsl{display:flex;flex-direction:column;gap:8px}
+.qsc{display:flex;align-items:center;gap:8px;border:1px solid var(--line);border-radius:10px;padding:8px 10px;background:var(--bg)}
+.qsc .sw{flex:none;width:18px;height:18px;border-radius:5px}
+.qsn{flex:1;min-width:0;display:flex;flex-direction:column}
+.qsn b{overflow-wrap:anywhere}
+.qsn span{font-size:13px;color:var(--sub)}
+.qsc button{flex:none;min-height:40px;touch-action:manipulation}
+/* 選ぶボタン（前に植えた作物・◯日後） */
+.qchips{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:8px}
+.qchip{display:inline-flex;align-items:center;gap:6px;min-height:38px;padding:6px 12px;border:1px solid var(--line);border-radius:20px;background:var(--bg);color:var(--ink);font-size:14px;cursor:pointer;touch-action:manipulation}
+.qchip.on{border-color:var(--main);background:var(--main2);font-weight:700}
+.q2{display:grid;grid-template-columns:1fr 1fr;gap:0 12px}
+.q2 input[type=date]{width:100%;min-width:0;min-height:40px}
+#mapToast{position:fixed;left:50%;bottom:18px;transform:translate(-50%,20px);max-width:min(92vw,520px);background:#222;color:#fff;padding:10px 16px;border-radius:22px;font-size:14px;line-height:1.4;box-shadow:0 4px 16px #0006;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;z-index:50}
+#mapToast.on{opacity:1;transform:translate(-50%,0)}
+@media(prefers-reduced-motion:reduce){#mapToast{transition:none}}
+@media(max-width:720px){
+  dialog.sheet{width:100vw;max-width:100vw;margin:auto 0 0;border-radius:18px 18px 0 0;border-width:1px 0 0;padding:8px 12px calc(12px + env(safe-area-inset-bottom))}
+  dialog.sheet[open]{max-height:88vh;max-height:88dvh}
+  dialog.sheet form::before{content:"";display:block;width:44px;height:5px;border-radius:3px;background:var(--line);margin:0 auto 8px} /* つまみ */
+  .qsc{flex-wrap:wrap}
+  .qsn{flex-basis:calc(100% - 30px)}
+  .qsc button{flex:1}
+  .qchip{min-height:42px;font-size:15px}
+  .q2 input[type=date]{-webkit-appearance:none;appearance:none;text-align:left}
+}
+.mapsvg .fz:focus{outline:none}
+.mapsvg .fz:focus-visible .bg{stroke:#ffb300;stroke-width:5;stroke-dasharray:none} /* キーボードで選んでいる区画 */

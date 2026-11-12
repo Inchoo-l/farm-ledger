@@ -365,3 +365,31 @@ test("減価償却の初年度月割り・償却終了・事業割合0%を保つ
   assert.equal(a.run("depreciation({acquireDate:'2026-01-01',cost:100000,life:5,ratio:0},2026).biz"),0);
   assert.equal(a.run("depreciation({acquireDate:'2020-01-01',cost:100000,life:5,ratio:100},2026).rest"),1);
 });
+
+test("償却率は国の償却率表どおり、小数第3位を切り上げる",()=>{
+  const a=app();
+  assert.equal(a.run("JSON.stringify([3,4,6,7,9,12,14,15].map(l=>depreciation({acquireDate:'2026-01-10',cost:1000000,life:l,ratio:100},2026).rate))"),
+    JSON.stringify([0.334,0.25,0.167,0.143,0.112,0.084,0.072,0.067]));
+  // 取得日は文字から年月を読む（時差で前の月・前の年にずれない）
+  assert.equal(a.run("depreciation({acquireDate:'2026-01-01',cost:120000,life:4,ratio:100},2026).months"),12);
+  assert.equal(a.run("depreciation({acquireDate:'2026-13-01',cost:120000,life:4,ratio:100},2026).dep"),0);
+});
+
+test("一覧が壊れた保存データでも起動でき、残りの記録はそのまま読める",()=>{
+  const a=app({fields:"x",expenses:null,plantings:[{id:5,year:2026,variety:"米"},null],sales:[],accounts:[],assets:[],settings:null,seq:9});
+  assert.equal(a.run("JSON.stringify([db.fields.length,db.expenses.length,db.plantings.length,db.seq,typeof db.settings])"),JSON.stringify([0,0,1,9,"object"]));
+});
+
+test("削除済みの作付を指したままの経費も、共通費として原価に入る",()=>{
+  const a=app();
+  a.run(`mode='rice';db.fields=[{id:1,name:'田',area:10,div:'田'}];
+    db.plantings=[{id:2,year:2026,fieldId:1,variety:'米',div:'田'}];
+    db.expenses=[{id:3,date:'2026-05-01',category:'肥料費',amount:1000,plantingId:2,div:'田'},
+                 {id:4,date:'2026-05-02',category:'肥料費',amount:500,plantingId:999,div:'田'}];`);
+  assert.equal(a.run("(()=>{const c=dashCalc('田');return c.prow.reduce((s,r)=>s+r.cost,0)===c.exTotal&&c.exTotal===1500;})()"),true);
+});
+
+test("年産は一覧でカンマを付けない",()=>{
+  const a=app();
+  assert.equal(a.run("cell('plantings',ENT.plantings.cols.find(c=>c.k=='year'),{year:2026})"),"2026");
+});
