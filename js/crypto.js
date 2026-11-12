@@ -16,9 +16,10 @@ async function newCrypto(pw){ // 新しいパスワードから鍵を作る（sa
   return{key:await deriveKey(pw,salt,ITER),salt:b64e(salt),iter:ITER};
 }
 async function encryptText(text,c){
+  const rev=JSON.parse(text).rev||0; // 暗号化中に入力が増えても、送信するスナップショットの版数を使う
   const iv=crypto.getRandomValues(new Uint8Array(12)); // 書き込みのたびに新しい iv
   const ct=new Uint8Array(await crypto.subtle.encrypt({name:"AES-GCM",iv},c.key,new TextEncoder().encode(text)));
-  return JSON.stringify({format:"agri-ledger-enc",v:1,kdf:"PBKDF2-SHA256",iter:c.iter,salt:c.salt,iv:b64e(iv),rev:db.rev||0,data:b64e(ct)});
+  return JSON.stringify({format:"agri-ledger-enc",v:1,kdf:"PBKDF2-SHA256",iter:c.iter,salt:c.salt,iv:b64e(iv),rev,data:b64e(ct)});
 }
 async function decryptEnv(env,c){
   try{

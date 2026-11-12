@@ -15,7 +15,7 @@ function cell(ent,c,r){
     else if(c.t=="account"){const a=db.accounts.find(x=>x.id==v);out=a?esc(a.name):"";}
     else if(c.t=="area")out=v===""||v==null?"":`${esc(v)}a（${tanbaStr(v)}）`;
     else if(c.t=="check")out=v?"✔":"";
-    else if(c.t=="number"&&v!==""&&v!=null)out=yen(v);
+    else if(c.t=="number"&&v!==""&&v!=null)out=numberText(c,v);
     else out=esc(v);
     return hy(out);
   }catch(e){return "-";}
