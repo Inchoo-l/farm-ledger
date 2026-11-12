@@ -393,3 +393,14 @@ test("年産は一覧でカンマを付けない",()=>{
   const a=app();
   assert.equal(a.run("cell('plantings',ENT.plantings.cols.find(c=>c.k=='year'),{year:2026})"),"2026");
 });
+
+test("バージョン番号が 大.中.小 の形で、更新履歴の先頭と一致する",()=>{
+  const ctx=vm.createContext({console,document:{getElementById:()=>null}});
+  vm.runInContext(readFileSync(new URL("../js/version.js",import.meta.url),"utf8"),ctx,{filename:"js/version.js"});
+  const ver=vm.runInContext("APP_VERSION",ctx);
+  assert.match(ver,/^\d+\.\d+\.\d+$/);
+  assert.equal(vm.runInContext("appVersionText()",ctx),`帳簿アプリ Ver.${ver}`);
+  assert.equal(vm.runInContext("showAppVersion()",ctx),false); // 表示先が無くても止まらない
+  const log=readFileSync(new URL("../更新履歴.md",import.meta.url),"utf8");
+  assert.equal((log.match(/^## Ver\.(\d+\.\d+\.\d+)/m)||[])[1],ver);
+});
