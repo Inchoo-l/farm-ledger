@@ -328,7 +328,7 @@ function mapPanel(cur){
   return `<div class="card"><div class="bar"><h2 style="margin:0">${esc(cur.name)}　${esc(pl.name)}</h2>
       <button class="b" onclick="mapQuickOpen(${pl.id})">🌱 作物を植える</button>
       <button class="g" onclick="edit('plantings',null,null,${pre})">詳しく入力して追加</button>
-      <button class="g" onclick="edit('plots',${pl.id})">区画の情報を編集</button>
+      <button class="g" onclick="edit('plots',${pl.id})">✎ 区画名・メモを変える</button>
       ${mapEdit&&pl.mx!=null?`<button class="g" onclick="mapUnplace(${pl.id})">地図から外す</button>`:""}
       ${ps.some(p=>p.sx!=null)?`<button class="g" onclick="mapResetBands(${pl.id})">作物の配置を自動に戻す</button>`:""}
       <button class="g d" onclick="del('plots',${pl.id})">区画を削除</button></div>
