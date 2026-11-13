@@ -23,6 +23,7 @@ footer a{color:var(--sub)}
 /* バージョンの表示（プライバシーポリシーの左） */
 #appVer{color:var(--sub);margin-right:12px}
 #appVer:empty{display:none}
+footer a.guide{margin-right:12px}
 a{color:var(--main)}
 header h1{font-size:18px;margin:0;flex:1}
 header select{font-size:15px;padding:3px}
