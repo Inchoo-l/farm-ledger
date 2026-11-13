@@ -83,8 +83,15 @@ function mapQuickHtml(pl,f){
     .map(p=>row(p,`${mapMD(p.plantDate)} 植付予定`,false)).join("");
   const crops=mapQCrops();
   const has=!!(growRows||lateRows||planRows); // 作物の行があるか（あるときは、植える入力欄をたたんでおく）
-  return `<div class="qsh"><div class="qst"><b>${esc(f?f.name:"")}　${esc(pl.name)}</b><span>${esc(D)}：${esc(stTxt)}</span></div>
+  return `<div class="qsh"><div class="qst"><b>${esc(f?f.name:"")}　${esc(pl.name)}</b><span>${esc(D)}：${esc(stTxt)}</span>
+        <button type="button" class="g qsrn" id="qsRnOpen" onclick="mapQuickRenameOpen(true)">✎ 区画名を変える</button></div>
       <button type="button" class="g qsx" aria-label="閉じる" onclick="mapQuickClose()">✕</button></div>
+    <div class="qsrnbox" id="qsRn" hidden>
+      <label>新しい区画名 <span class="rq">※</span>
+        <input id="qsRnName" type="text" autocomplete="off" enterkeyhint="done" maxlength="${MAPQ_NAMEMAX}" value="${esc(pl.name)}"></label>
+      <p class="hint qserr" id="qsRnErr" hidden></p>
+      <div class="qchips"><button type="button" class="b" onclick="mapQuickRename()">保存</button><button type="button" class="g" onclick="mapQuickRenameOpen(false)">やめる</button></div>
+    </div>
     <div class="fbody qsbody">
       ${has?`<div class="qsl">${growRows}${lateRows}${planRows}</div>
         ${growRows||lateRows?`<p class="hint">「収穫した」を押すと、基準日（${esc(D)}）を収穫日として記録します。</p>`:""}`:""}
@@ -130,6 +137,8 @@ function mapQuickBind(){
   el["plantDate"].addEventListener("change",()=>{if(autoDays)setPlan(autoDays,hint&&!hint.hidden?hint.textContent:"");});
   el["harvestPlan"].addEventListener("change",()=>{autoDays=0;document.querySelectorAll("#qsDays .qchip").forEach(b=>b.classList.remove("on"));if(hint)hint.hidden=true;}); // 自分で日付を選んだら、自動の連動をやめる
   frm.onsubmit=mapQuickSubmit;
+  const rn=$("qsRnName");
+  if(rn)rn.addEventListener("keydown",e=>{if(e.key=="Enter"&&!e.isComposing){e.preventDefault();mapQuickRename();}}); // 変換確定の Enter は除く
   // 「もう1つ植える」を開いたときだけ、下の「植える」ボタンを出す（たたんでいる間は入力欄を無効にして、送信の対象から外す）
   const more=$("qsMore"),bar=$("qsBar"),bar0=$("qsBar0");
   if(more&&bar){
@@ -190,6 +199,44 @@ function mapQuickHarvest(pid){
   }catch(e){alert("収穫を記録できませんでした："+(e.message||e));}
 }
 function mapQuickEdit(pid){mapQuickClose();edit("plantings",pid);}
+/* ----- 区画名の変更 ----- */
+const MAPQ_NAMEMAX=40; // 区画名の長さの上限（地図の見出しに収まるように）
+// 区画名として使えるか確かめる。問題があれば理由の文、なければ空の文字を返す
+// selfId＝名前を変える区画自身（同じ名前のままなら重複扱いしない）
+function mapPlotNameError(name,fieldId,selfId){
+  const n=String(name??"").trim();
+  if(!n)return "区画名を入れてください";
+  if(n.length>MAPQ_NAMEMAX)return `区画名は${MAPQ_NAMEMAX}文字までにしてください`;
+  if((db.plots||[]).some(p=>p.id!=selfId&&p.fieldId==fieldId&&String(p.name).trim()==n))return `この畑には、すでに「${n}」という区画があります。別の名前にしてください`;
+  return "";
+}
+// 名前の入力欄を出す／しまう
+function mapQuickRenameOpen(on){
+  try{
+    const box=$("qsRn"),btn=$("qsRnOpen"),inp=$("qsRnName"),err=$("qsRnErr");
+    if(!box||!inp)return;
+    box.hidden=!on;if(btn)btn.hidden=on;if(err)err.hidden=true;
+    if(on){inp.focus();inp.select();}
+    else{const pl=(db.plots||[]).find(x=>x.id==mapQPlot);if(pl)inp.value=pl.name;} // やめたら元の名前に戻す
+  }catch(e){console.error(e);}
+}
+// 保存：区画名を変えて、地図とこの画面を新しい名前で描き直す（「元に戻す」で戻せる）
+function mapQuickRename(){
+  const err=$("qsRnErr");
+  const show=m=>{if(err){err.textContent=m;err.hidden=!m;}else if(m)alert(m);};
+  try{
+    const pl=(db.plots||[]).find(x=>x.id==mapQPlot);
+    if(!pl)throw new Error("区画が見つかりません（削除された可能性があります）");
+    const n=$("qsRnName").value.trim(),old=pl.name;
+    if(n==old){mapQuickRenameOpen(false);return;} // 変わっていなければ何もしない
+    const m=mapPlotNameError(n,pl.fieldId,pl.id);
+    if(m){show(m);$("qsRnName").focus();return;}
+    pl.name=n;
+    save();render();
+    mapQuickOpen(pl.id); // 見出しを新しい名前にする
+    mapToast(`区画名を「${old}」から「${n}」に変えました`);
+  }catch(e){console.error(e);show("区画名を変えられませんでした："+(e.message||e));}
+}
 // 詳しく入力：ここまでに入れた内容を、今までの入力画面に引き継ぐ
 function mapQuickFull(){
   try{

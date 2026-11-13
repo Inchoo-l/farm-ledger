@@ -101,7 +101,9 @@ function edit(name,id,from,pre){ // pre＝新規入力のとき、あらかじ�
         });
         if(name=="expenses"&&(o.amount===""||o.amount==null)&&o.qty!==""&&o.qty!=null&&o.unitPrice!==""&&o.unitPrice!=null)o.amount=Math.round(o.qty*o.unitPrice);
         if(name=="expenses"&&!o.amount&&o.amount!==0){ev.preventDefault();alert("金額、または数量と単価を入力してください");return;}
-        const error=recordError(o,cols.filter(c=>!$("frm").elements[c.k].disabled));
+        const error=recordError(o,cols.filter(c=>!$("frm").elements[c.k].disabled))
+          ||(name=="plots"&&typeof mapPlotNameError=="function"?mapPlotNameError(o.name,o.fieldId,id):""); // 区画名：同じ畑での重複・長さ
+        if(name=="plots"&&!error)o.name=String(o.name).trim();
         if(error){ev.preventDefault();alert(error);return;}
         // 口座が必要な記録なのに口座が無い場合は保存しない
         if((name=="expenses"||(name=="sales"&&!NOCASH.includes(o.kind)))&&!o.accountId){ev.preventDefault();alert("口座を選んでください");return;}

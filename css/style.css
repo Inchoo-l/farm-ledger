@@ -338,6 +338,12 @@ dialog.sheet{width:min(540px,94vw);padding:14px 16px}
 .qst b{font-size:17px;overflow-wrap:anywhere}
 .qst span{font-size:13px;color:var(--sub)}
 .qsx{flex:none;min-width:40px;min-height:40px;font-size:16px}
+/* 区画名の変更（かんたん入力の見出しの下） */
+.qsrn{align-self:flex-start;margin-top:4px;min-height:36px;padding:4px 10px;font-size:13px}
+.qsrn[hidden],.qsrnbox[hidden],.qserr[hidden]{display:none}
+.qsrnbox{margin:0 0 8px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--bg)}
+.qsrnbox label{margin-top:0}
+.qserr{color:var(--warn);margin:6px 0 0}
 .qsbody label{margin-top:10px}
 .qsh3{font-size:15px;margin:14px 0 0;padding-top:12px;border-top:1px dashed var(--line)}
 .qsbody>.qsh3:first-child{border-top:0;padding-top:0;margin-top:0}
