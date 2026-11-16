@@ -11,7 +11,7 @@ function colLabel(c){
 // 一覧の表の見出し行と、記録1件ぶんの行（経費の検索表示 expfilter.js でも同じものを使う）
 const listHead=cols=>`<tr class="hd">${cols.map(c=>`<th class="${c.t=="number"?"n":""}">${esc(colLabel(c))}${c.g?q(c.g):""}</th>`).join("")}<th></th></tr>`;
 function listRow(name,cols,r){
-  const dup=name=="expenses"||name=="sales"; // 経費・売上は「複製」できる
+  const dup=name=="expenses"||name=="sales"||name=="waterlogs"; // 経費・売上・入水記録は「複製」できる
   return `<tr>${cols.map(c=>`<td class="${c.t=="number"?"n":""}" data-label="${esc(colLabel(c))}">${cell(name,c,r)}</td>`).join("")}
       <td class="act">${dup?`<button class="g" onclick="edit('${name}',null,${+r.id})">複製</button> `:""}<button class="g" onclick="edit('${name}',${+r.id})">編集</button> <button class="g d" onclick="del('${name}',${+r.id})">削除</button></td></tr>`;
 }
@@ -23,6 +23,8 @@ function cell(ent,c,r){
     if(ent=="expenses"&&typeof expCellMark=="function"){const m=expCellMark(c,r);if(m!==null)return m;}
     if(c.calc=="bal")out=yen(acctBal(r)); // 口座の現在残高（計算値）
     else if(c.calc=="cover")out=esc(coverText(r)); // 被覆資材（マルチ・藁）
+    else if(c.calc=="wdur")out=esc(waterDurText(r)); // 入水した時間
+    else if(c.calc=="wrate")out=esc(waterRateText(r)); // 1時間に上がった水深
     else if(c.t=="field"){const f=db.fields.find(x=>x.id==v);out=esc(f?f.name:"");}
     else if(c.t=="plot"){const pl=(db.plots||[]).find(x=>x.id==v);out=esc(pl?pl.name:"");}
     else if(c.t=="planting"){const p=db.plantings.find(x=>x.id==v);out=p?esc(plantLabel(p)):"共通";}
@@ -44,7 +46,8 @@ function listView(name){
   }
   const E=ENT[name];let rows=name=="accounts"?[...db[name]]:db[name].filter(inMode); // 口座は田・畑・全体で共通
   const title=name=="fields"?MODE_NAME[mode]+"の一覧":E.title;
-  if(name=="expenses"||name=="sales")rows=rows.filter(r=>inYear(r.date));
+  if(name=="expenses"||name=="sales"||name=="waterlogs")rows=rows.filter(r=>inYear(r.date));
+  if(name=="waterlogs")rows=[...rows].sort((a,b)=>String(b.date||"").localeCompare(String(a.date||""))||String(b.start||"").localeCompare(String(a.start||""))||(+b.id||0)-(+a.id||0));
   if(name=="plantings")rows=rows.filter(r=>r.year==year);
   if(name=="expenses"||name=="sales")rows=[...rows].sort(byDateDesc);
   const cols=TABLE_COLS[name].filter(k=>!(mode=="hat"&&k=="rent")&&!(mode!="hat"&&(k=="plotId"||k=="cover"))).map(k=>E.cols.find(c=>c.k==k));
@@ -61,10 +64,17 @@ function listView(name){
      <option value="exact" ${db.settings.unit!="approx"?"selected":""}>尺貫法どおり（1反＝約991.7㎡＝約9.92a）</option>
      <option value="approx" ${db.settings.unit=="approx"?"selected":""}>概算（1反＝10a）</option></select>
     　1町＝10反、1反＝10畝。登記簿の面積は㎡なので、1a＝100㎡で入力してください。</p>`;
+  if(name=="waterlogs"){
+    // 圃場ごとの減水深の目安（雨なし・実測の記録から）
+    const loss=db.fields.filter(inMode).map(f=>[f,waterLossText(f.id)]).filter(x=>x[1]);
+    hint=`<p class="hint">田んぼに水を入れたときの記録です。入水を始めたら「＋ 追加」で始めた時刻と水深を入れ、止めたら「編集」で止めた時刻と水深を入れます。入水していないときに「水深だけ測った」記録を続けて残すと、1日に下がる水深（減水深）がわかります。</p>
+      <p class="hint">水深は、田んぼの中の決まった場所（水口から離れた所）に目盛りのある杭を立てて、田面からの高さをcmで読むと毎回そろいます。</p>`
+      +(loss.length?`<p><b>減水深の目安</b>（雨なし・実測の記録から）：${loss.map(([f,t])=>`${esc(f.name)} ${esc(t)}`).join("　")}</p>`:"");
+  }
   if(name=="plantings")hint=`<p class="hint">先に「田んぼ」または「畑」を登録してください。ここで品種（作物）・苗の入手先・収量を管理します。畑の作物も登録できます。</p>`;
   return `<div class="card"><div class="bar"><h2 style="margin:0">${title}</h2>
     <button class="b" onclick="edit('${name}')">＋ 追加</button>${total}
-    ${(name=="expenses"||name=="sales")?`<button class="g" onclick="csv('${name}')">CSV出力（${year}年）</button>`:""}</div>${hint}
+    ${(name=="expenses"||name=="sales"||name=="waterlogs")?`<button class="g" onclick="csv('${name}')">CSV出力（${year}年）</button>`:""}</div>${hint}
     <div class="scroll"><table class="lt">${listHead(cols)}
     ${rows.map(r=>listRow(name,cols,r)).join("")
       ||`<tr><td colspan="${cols.length+1}" class="hint">データがありません</td></tr>`}

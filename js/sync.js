@@ -63,7 +63,7 @@ async function readRemote(ask){
   return{f,obj,enc};
 }
 const validData=o=>!!o&&Array.isArray(o.expenses)&&Array.isArray(o.fields)
-  &&["fields","expenses","sales","plantings","assets","accounts","plots"].every(k=>o[k]===undefined||(Array.isArray(o[k])&&o[k].every(r=>r&&typeof r=="object"&&!Array.isArray(r))))
+  &&["fields","expenses","sales","plantings","assets","accounts","plots","waterlogs"].every(k=>o[k]===undefined||(Array.isArray(o[k])&&o[k].every(r=>r&&typeof r=="object"&&!Array.isArray(r))))
   &&["settings","yearly","cropColors"].every(k=>o[k]===undefined||(o[k]&&typeof o[k]=="object"&&!Array.isArray(o[k])));
 function applyRemote(obj,f){
   const lastBackup=db.lastBackup;
