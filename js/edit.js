@@ -13,6 +13,20 @@ function syncAcct(){
   }catch(e){}
 }
 
+// 入水記録：「水深だけ測った」ときは、入水したときだけの項目を隠して保存しない（隠した欄は送信されない）
+function syncWater(){
+  try{
+    const f=$("frm"),k=f.elements["wkind"];
+    if(!k)return;
+    const off=k.value==WATER_KINDS[1];
+    ENT.waterlogs.cols.filter(c=>c.wt).forEach(c=>{
+      const box=f.querySelector(`.fld[data-k="${c.k}"]`),el=f.elements[c.k];
+      if(box)box.hidden=off;
+      if(el)el.disabled=off;
+    });
+  }catch(e){}
+}
+
 function edit(name,id,from,pre){ // pre＝新規入力のとき、あらかじめ入れておく値（区画マップから「作付を追加」するときなど）
   try{
     const E=ENT[name];
@@ -77,6 +91,8 @@ function edit(name,id,from,pre){ // pre＝新規入力のとき、あらかじ�
     const kd=$("frm").elements["kind"];
     if(kd&&$("frm").elements["accountId"])kd.addEventListener("change",syncAcct);
     syncAcct();
+    const wk=$("frm").elements["wkind"];
+    if(name=="waterlogs"&&wk){wk.addEventListener("change",syncWater);syncWater();}
     const dlg=$("dlg");dlg.showModal();
     // 最初の入力欄にカーソルを置く（日付欄が先頭ならカレンダーが自動で開く）
     const f1=$("frm").elements[cols[0].k];if(f1&&f1.focus)f1.focus();
@@ -150,6 +166,9 @@ function del(name,id){
       const plots=new Set((db.plots||[]).filter(p=>p.fieldId==id).map(p=>String(p.id)));
       if(db.plantings.some(p=>p.fieldId==id||plots.has(String(p.plotId)))){
         alert("この圃場には作付が紐づいているため削除できません。先に作付の圃場・区画を変更するか、作付を削除してください。");return;
+      }
+      if((db.waterlogs||[]).some(w=>w.fieldId==id)){
+        alert("この圃場には入水記録があるため削除できません。先に入水記録の圃場を変更するか、入水記録を削除してください。");return;
       }
     }
     const msg=name=="fields"&&(db.plots||[]).some(p=>p.fieldId==id)?"削除しますか？\nこの畑の区画（地図の配置）も一緒に消えます。":name=="plots"?"この区画を削除しますか？\nこの区画の作付は消えず、区画だけ未設定になります。":name=="plantings"?"この作付を削除しますか？\n紐づいている経費・売上は残り、作付との紐づけが外れます。経費は共通費になります。":"削除しますか？";

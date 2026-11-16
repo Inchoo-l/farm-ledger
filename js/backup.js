@@ -16,6 +16,9 @@ function csv(name){
     let v=r[c.k];
     if(c.t=="planting"){const p=db.plantings.find(x=>x.id==v);v=p?plantLabel(p):"";}
     if(c.t=="account"){const ac=db.accounts.find(x=>x.id==v);v=ac?ac.name:"";}
+    if(c.t=="field"){const f=db.fields.find(x=>x.id==v);v=f?f.name:"";}
+    if(c.calc=="wdur")v=waterDurText(r);
+    if(c.calc=="wrate")v=waterRateText(r);
     if(c.t=="check")v=v?"有":"";
     return q(v);}).join(",")));
   dl(`${name}_${year}.csv`,"﻿"+lines.join("\r\n"),"text/csv");

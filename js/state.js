@@ -3,7 +3,7 @@
 /* ========== データ ========== */
 const KEY="agri-ledger-v1";
 const localSave={at:null,error:""};
-const DB_LISTS=["fields","plantings","expenses","sales","assets","accounts","plots"]; // id を持つ記録の一覧
+const DB_LISTS=["fields","plantings","expenses","sales","assets","accounts","plots","waterlogs"]; // id を持つ記録の一覧
 let db=load();
 if(db.backupDirty===undefined)db.backupDirty=!!db.dirty;
 function load(){
@@ -20,7 +20,7 @@ function fixDb(o){
   if(!d.cropColors||typeof d.cropColors!="object")d.cropColors={};
   return d;
 }
-function empty(){return{fields:[],plantings:[],expenses:[],sales:[],assets:[],accounts:[],settings:{deduction:null},plots:[],cropColors:{},yearly:{},lastBackup:null,seq:1};}
+function empty(){return{fields:[],plantings:[],expenses:[],sales:[],assets:[],accounts:[],settings:{deduction:null},plots:[],waterlogs:[],cropColors:{},yearly:{},lastBackup:null,seq:1};}
 function persistLocal(){
   try{
     localStorage.setItem(KEY,JSON.stringify(db));
@@ -57,7 +57,7 @@ function recordBackup(snapshot){
 function uid(){
   // 古いバックアップの連番が欠けていても、登録済みの番号を再利用しない。
   let next=Number.isSafeInteger(+db.seq)&&+db.seq>0?+db.seq:1;
-  for(const k of ["fields","plots","plantings","accounts","expenses","sales","assets"]){
+  for(const k of ["fields","plots","plantings","accounts","expenses","sales","assets","waterlogs"]){
     for(const r of db[k]||[]){if(Number.isSafeInteger(+r.id)&&+r.id>=next)next=+r.id+1;}
   }
   if(!Number.isSafeInteger(next)||!Number.isSafeInteger(next+1))throw new Error("登録番号の上限に達しました");

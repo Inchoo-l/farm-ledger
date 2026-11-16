@@ -44,6 +44,7 @@ function recordError(o,cols){
       if(c.min!=null&&+v<c.min||c.max!=null&&+v>c.max)return `「${c.l}」が入力できる範囲を超えています`;
       if(c.t=="number"&&!c.step&&!Number.isInteger(+v))return `「${c.l}」は整数で入力してください`;
     }
+    if(c.t=="time"&&!/^([01]\d|2[0-3]):[0-5]\d$/.test(String(v)))return `「${c.l}」は 07:30 の形で入力してください`;
     const table={field:"fields",plot:"plots",planting:"plantings",account:"accounts"}[c.t];
     if(table&&!db[table].some(r=>r.id==v))return `「${c.l}」の選択先が見つかりません。選び直してください`;
     if(c.t=="plot"&&o.fieldId&&!db.plots.some(p=>p.id==v&&p.fieldId==o.fieldId))return "選んだ区画は、この圃場に属していません";

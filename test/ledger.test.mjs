@@ -404,3 +404,81 @@ test("バージョン番号が 大.中.小 の形で、更新履歴の先頭と�
   const log=readFileSync(new URL("../更新履歴.md",import.meta.url),"utf8");
   assert.equal((log.match(/^## Ver\.(\d+\.\d+\.\d+)/m)||[])[1],ver);
 });
+
+/* ===== 入水記録（Ver.1.4.0） ===== */
+test("入水記録：入水した時間と、1時間に上がった水深を計算する（日付をまたぐ入水も）",()=>{
+  const a=app();
+  assert.equal(a.run("waterMinutes({wkind:'入水した',start:'07:30',end:'10:00'})"),150);
+  assert.equal(a.run("waterMinutes({wkind:'入水した',start:'22:00',end:'01:30'})"),210); // 夜に始めて翌朝止めた
+  assert.equal(a.run("waterMinutes({wkind:'入水した',start:'07:30',end:''})"),null);
+  assert.equal(a.run("waterMinutes({wkind:'水深だけ測った（入水なし）',start:'07:30',end:'10:00'})"),null);
+  assert.equal(a.run("waterRate({wkind:'入水した',start:'06:00',end:'08:00',depthBefore:2,depthAfter:5})"),1.5);
+  assert.equal(a.run("waterRate({wkind:'入水した',start:'06:00',end:'08:00',depthBefore:2,depthAfter:''})"),null);
+  assert.equal(a.run("waterDurText({wkind:'入水した',start:'06:00',end:''})"),"止めた時刻が未入力");
+  assert.equal(a.run("waterRateText({wkind:'入水した',start:'06:00',end:'08:00',depthBefore:2,depthAfter:5})"),"+1.5cm/時");
+});
+
+test("入水記録：減水深は、入水していない間・雨なし・実測の組だけで求める",()=>{
+  const a=app();
+  a.run(`db.waterlogs=[
+    {id:1,fieldId:1,date:'2026-06-01',wkind:'水深だけ測った（入水なし）',start:'07:00',depthBefore:5,rain:'なし',measured:'実測'},
+    {id:2,fieldId:1,date:'2026-06-02',wkind:'水深だけ測った（入水なし）',start:'07:00',depthBefore:3,rain:'なし',measured:'実測'},
+    {id:3,fieldId:1,date:'2026-06-02',wkind:'入水した',start:'08:00',end:'10:00',depthBefore:3,depthAfter:6,rain:'なし',measured:'実測'},
+    {id:4,fieldId:1,date:'2026-06-03',wkind:'水深だけ測った（入水なし）',start:'10:00',depthBefore:4,rain:'なし',measured:'実測'},
+    {id:5,fieldId:1,date:'2026-06-04',wkind:'水深だけ測った（入水なし）',start:'10:00',depthBefore:3,rain:'小雨',measured:'実測'},
+    {id:6,fieldId:2,date:'2026-06-01',wkind:'水深だけ測った（入水なし）',start:'07:00',depthBefore:9,rain:'なし',measured:'実測'}]`);
+  // 1→2：24時間で2cm（2cm/日）。2→3の入水開始：1時間なので使わない。入水終了→4：24時間で2cm（2cm/日）。4→5：雨なので使わない
+  assert.equal(a.run("JSON.stringify(waterLossRates(1))"),JSON.stringify([2,2]));
+  assert.equal(a.run("waterLossText(1)"),"2.0cm/日（2回分）");
+  assert.equal(a.run("waterLossRates(2).length"),0); // 1回だけでは求めない
+  // 止めた記録がない入水をはさむと、その前後はつながない
+  a.run("db.waterlogs=[{id:1,fieldId:1,date:'2026-06-01',wkind:'水深だけ測った（入水なし）',start:'07:00',depthBefore:5},{id:2,fieldId:1,date:'2026-06-01',wkind:'入水した',start:'12:00',depthBefore:4},{id:3,fieldId:1,date:'2026-06-02',wkind:'水深だけ測った（入水なし）',start:'07:00',depthBefore:6}]");
+  assert.equal(a.run("JSON.stringify(waterLossRates(1).map(v=>Math.round(v*10)/10))"),JSON.stringify([4.8])); // 1→入水開始（5時間で1cm）だけ
+});
+
+test("入水記録：時刻の形・水深の範囲を保存前に確認する",()=>{
+  const a=app();
+  a.run("db.fields=[{id:1,name:'田'}]");
+  const ok="{date:'2026-06-25',fieldId:1,wkind:'入水した',start:'07:30',depthBefore:2}";
+  assert.equal(a.run(`recordError(${ok},ENT.waterlogs.cols.filter(c=>!c.calc))`),'');
+  assert.notEqual(a.run(`recordError(Object.assign(${ok},{start:'7時半'}),ENT.waterlogs.cols.filter(c=>!c.calc))`),'');
+  assert.notEqual(a.run(`recordError(Object.assign(${ok},{start:'24:10'}),ENT.waterlogs.cols.filter(c=>!c.calc))`),'');
+  assert.notEqual(a.run(`recordError(Object.assign(${ok},{depthBefore:-1}),ENT.waterlogs.cols.filter(c=>!c.calc))`),'');
+  assert.notEqual(a.run(`recordError(Object.assign(${ok},{fieldId:9}),ENT.waterlogs.cols.filter(c=>!c.calc))`),'');
+});
+
+test("入水記録：古いデータ・壊れたデータでも起動でき、番号は入水記録とも重ならない",()=>{
+  const a=app(ledger());
+  assert.equal(a.run("Array.isArray(db.waterlogs)&&db.waterlogs.length===0"),true); // 入水記録が無い古いデータ
+  const b=app({fields:[],expenses:[],waterlogs:"x",seq:1});
+  assert.equal(b.run("Array.isArray(db.waterlogs)"),true);
+  b.run("db.waterlogs=[{id:50}]");
+  assert.equal(b.run("uid()"),51);
+  assert.equal(a.run("validData({fields:[],expenses:[]})"),true); // 共有ファイルに入水記録が無くてもよい
+  assert.equal(a.run("validData({fields:[],expenses:[],waterlogs:'x'})"),false);
+});
+
+test("入水記録がある圃場は削除して参照切れにしない",()=>{
+  const a=app();a.context.confirm=()=>true;
+  a.run("db.fields=[{id:1,name:'田'}];db.waterlogs=[{id:2,fieldId:1,date:'2026-06-25'}];del('fields',1)");
+  assert.equal(a.run("db.fields.length"),1);
+});
+
+test("入水記録の一覧：今の年・田んぼだけを新しい順に出し、減水深の目安も表示する",()=>{
+  const a=app();
+  a.run(`mode='rice';db.fields=[{id:1,name:'東の田',div:'田'}];
+    db.waterlogs=[
+     {id:2,fieldId:1,div:'田',date:'2026-06-01',wkind:'水深だけ測った（入水なし）',start:'07:00',depthBefore:5,rain:'なし',measured:'実測'},
+     {id:3,fieldId:1,div:'田',date:'2026-06-02',wkind:'水深だけ測った（入水なし）',start:'07:00',depthBefore:3,rain:'なし',measured:'実測'},
+     {id:4,fieldId:1,div:'田',date:'2025-06-02',wkind:'入水した',start:'07:00',depthBefore:3,note:'去年の記録'},
+     {id:5,fieldId:1,div:'田',date:'2026-06-02',wkind:'入水した',start:'09:00',end:'11:30',depthBefore:3,depthAfter:6}]`);
+  const html=a.run("listView('waterlogs')");
+  assert.match(html,/減水深の目安/);
+  assert.match(html,/東の田 2\.0cm\/日（1回分）/);
+  assert.match(html,/2時間30分/);
+  assert.doesNotMatch(html,/去年の記録/);
+  assert.ok(html.indexOf("09:00")<html.indexOf(">07:00<")); // 同じ日は時刻の新しい順
+  assert.equal(a.run("tabsFor().some(t=>t[0]==='waterlogs')"),true);
+  a.run("mode='hat'");
+  assert.equal(a.run("tabsFor().some(t=>t[0]==='waterlogs')"),false); // 畑には出さない
+});
